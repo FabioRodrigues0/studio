@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Projects",
+  "description": "A list of projects.",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string"
+      },
+      "name": {
+        "type": "string"
+      },
+      "description": {
+        "type": "string"
+      },
+      "technologies": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "imageUrl": {
+        "type": "string"
+      },
+      "projectUrl": {
+        "type": "string"
+      },
+      "repositoryUrl": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "id",
+      "name",
+      "description",
+      "technologies",
+      "imageUrl"
+    ]
+  }
+}

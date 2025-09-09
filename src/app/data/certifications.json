@@ -1,0 +1,12 @@
+[
+  {
+    "name": "Certification 1",
+    "issuer": "Issuer A",
+    "url": "https://example.com/cert1"
+  },
+  {
+    "name": "Certification 2",
+    "issuer": "Issuer B",
+    "url": "https://example.com/cert2"
+  }
+]

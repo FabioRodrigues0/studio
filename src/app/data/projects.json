@@ -1,0 +1,16 @@
+[
+  {
+    "name": "Project 1",
+    "description": "This is the first project.",
+    "technologies": ["React", "TypeScript"],
+    "url": "https://example.com/project1",
+    "githubUrl": "https://github.com/user/project1"
+  },
+  {
+    "name": "Project 2",
+    "description": "This is the second project.",
+    "technologies": ["Next.js", "Babylon.js"],
+    "url": "https://example.com/project2",
+    "githubUrl": "https://github.com/user/project2"
+  }
+]
