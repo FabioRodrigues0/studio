@@ -297,6 +297,7 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
       monitorStand.checkCollisions = true;
 
       // Create PC Tower
+      // You can edit this model in the Babylon.js Sandbox: https://sandbox.babylonjs.com/
       const pcTower = MeshBuilder.CreateBox(
         'pcTower',
         { width: 0.8, height: 2.5, depth: 2 },
@@ -349,6 +350,7 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
       });
 
       // Create Bookshelf
+      // You can edit this model in the Babylon.js Sandbox: https://sandbox.babylonjs.com/
       const bookshelfHeight = 8;
       const bookshelfWidth = 5;
       const bookshelfDepth = 1.2;
@@ -373,7 +375,7 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         bookshelfPosition.y,
         bookshelfPosition.z - bookshelfDepth / 2 + shelfThickness / 2
       );
-      bookshelfBack.rotation.y = Math.PI;
+      bookshelfBack.rotation.y = 0;
       bookshelfBack.material = woodMat;
       bookshelfBack.checkCollisions = true;
 
