@@ -1,6 +1,6 @@
 'use client';
 
-import type { Scene, Engine, Vector3, Mesh } from '@babylonjs/core';
+import type { Scene, Engine, Vector3 } from '@babylonjs/core';
 import {
   Engine as BabylonEngine,
   Scene as BabylonScene,
@@ -9,6 +9,7 @@ import {
   Color4,
   StandardMaterial,
   MeshBuilder,
+  Mesh,
   ActionManager,
   ExecuteCodeAction,
   GlowLayer,
