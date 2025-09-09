@@ -22,7 +22,7 @@
 - [x] T019 [P] Create the basic 3D scene with a camera and lighting in `src/components/polyfolio/OfficeScene.tsx`.
 - [x] T020 [P] Implement first-person and orbital camera controls in `src/components/polyfolio/Controls.tsx`.
 - [x] T021 [P] Create the 3D model for the computer.
-- [ ] T022 [P] Create the 3D model for the bookshelf.
+- [x] T022 [P] Create the 3D model for the bookshelf.
 - [ ] T023 [P] Create the 3D models for the certification frames.
 - [ ] T024 [P] Create the 3D models for the hobby objects (soccer ball, movie posters, popcorn).
 - [ ] T025 Implement the logic to display projects when the computer is clicked in `src/components/polyfolio/AITool.tsx`.
