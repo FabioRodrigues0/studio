@@ -419,6 +419,9 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         deskPositionZ + 1
       );
 
+      const bookshelf = new Mesh("bookshelf", scene);
+      bookshelf.position = bookshelfPosition;
+
       const bookshelfBack = MeshBuilder.CreateBox(
         'bookshelfBack',
         {
@@ -428,12 +431,8 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         },
         scene
       );
-      bookshelfBack.position = new BabylonVector3(
-        bookshelfPosition.x,
-        bookshelfPosition.y,
-        bookshelfPosition.z - bookshelfDepth / 2 + shelfThickness / 2
-      );
-      bookshelfBack.rotation.y = 0;
+      bookshelfBack.parent = bookshelf;
+      bookshelfBack.position.z = -bookshelfDepth / 2 + shelfThickness / 2;
       bookshelfBack.material = woodMat;
       bookshelfBack.checkCollisions = true;
 
@@ -446,11 +445,8 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         },
         scene
       );
-      bookshelfLeft.position = new BabylonVector3(
-        bookshelfPosition.x - bookshelfWidth / 2 + shelfThickness / 2,
-        bookshelfPosition.y,
-        bookshelfPosition.z
-      );
+      bookshelfLeft.parent = bookshelf;
+      bookshelfLeft.position.x = -bookshelfWidth / 2 + shelfThickness / 2;
       bookshelfLeft.material = woodMat;
       bookshelfLeft.checkCollisions = true;
 
@@ -463,17 +459,14 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         },
         scene
       );
-      bookshelfRight.position = new BabylonVector3(
-        bookshelfPosition.x + bookshelfWidth / 2 - shelfThickness / 2,
-        bookshelfPosition.y,
-        bookshelfPosition.z
-      );
+      bookshelfRight.parent = bookshelf;
+      bookshelfRight.position.x = bookshelfWidth / 2 - shelfThickness / 2;
       bookshelfRight.material = woodMat;
       bookshelfRight.checkCollisions = true;
 
       const numShelves = 4;
       for (let i = 0; i < numShelves; i++) {
-        const shelfY = (bookshelfHeight / (numShelves + 1)) * (i + 1);
+        const shelfY = (bookshelfHeight / (numShelves + 1)) * (i + 1) - bookshelfHeight / 2;
         const shelf = MeshBuilder.CreateBox(
           `bookshelf_shelf_${i}`,
           {
@@ -483,11 +476,8 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
           },
           scene
         );
-        shelf.position = new BabylonVector3(
-          bookshelfPosition.x,
-          shelfY,
-          bookshelfPosition.z
-        );
+        shelf.parent = bookshelf;
+        shelf.position.y = shelfY;
         shelf.material = woodMat;
         shelf.checkCollisions = true;
 
@@ -499,10 +489,11 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
               { width: 0.4, height: 1.2, depth: 1 },
               scene
             );
+            book.parent = shelf;
             const bookPosition = new BabylonVector3(
-              bookshelfPosition.x - bookshelfWidth / 2 + 0.8 + j * 0.5,
-              shelfY + shelfThickness / 2 + 0.6,
-              bookshelfPosition.z
+              -bookshelfWidth / 2 + 0.8 + j * 0.5,
+              shelfThickness / 2 + 0.6,
+              0
             );
             book.position = bookPosition;
             const bookMat = new StandardMaterial(`${tech.id}-mat`, scene);
