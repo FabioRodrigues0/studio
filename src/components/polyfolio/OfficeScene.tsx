@@ -82,6 +82,7 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         avatarHeight / 2,
         avatarRadius
       );
+      avatar.ellipsoidOffset = new BabylonVector3(0, avatarHeight / 2, 0);
 
       const avatarMat = new StandardMaterial('avatarMat', scene);
       avatarMat.diffuseColor = Color3.FromHexString('#4A5568');
@@ -112,7 +113,7 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         'orbitCamera',
         -Math.PI / 2,
         Math.PI / 2.5,
-        15,
+        5,
         BabylonVector3.Zero(),
         scene
       );
@@ -430,7 +431,7 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         bookshelfPosition.y,
         bookshelfPosition.z - bookshelfDepth / 2 + shelfThickness / 2
       );
-      bookshelfBack.rotation.y = 0;
+      bookshelfBack.rotation.y = Math.PI;
       bookshelfBack.material = woodMat;
       bookshelfBack.checkCollisions = true;
 
