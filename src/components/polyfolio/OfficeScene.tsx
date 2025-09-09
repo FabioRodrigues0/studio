@@ -315,20 +315,64 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         })
       );
 
-      certifications.forEach((cert, i) => {
+      const createCertificationFrame = (cert: Certification, position: Vector3) => {
+        // You can edit this model in the Babylon.js Sandbox: https://sandbox.babylonjs.com/
         const frame = MeshBuilder.CreateBox(
           cert.id,
           { width: 2.5, height: 1.8, depth: 0.1 },
           scene
         );
-        frame.position = new BabylonVector3(
-          -6 + i * 6,
-          deskHeight + 3.5,
-          halfRoomSize - wallThickness - 0.1
-        );
+        frame.position = position;
         const frameMat = new StandardMaterial(`${cert.id}-mat`, scene);
-        frameMat.diffuseTexture = new Texture(cert.imageUrl, scene);
+        frameMat.diffuseColor = new Color3(0.2, 0.2, 0.2);
         frame.material = frameMat;
+
+        const backboard = MeshBuilder.CreateBox(
+          `${cert.id}-backboard`,
+          { width: 2.3, height: 1.6, depth: 0.05 },
+          scene
+        );
+        backboard.parent = frame;
+        backboard.position.z = -0.05;
+        const backboardMat = new StandardMaterial(`${cert.id}-backboard-mat`, scene);
+        backboardMat.diffuseColor = new Color3(0.9, 0.9, 0.9);
+        backboard.material = backboardMat;
+
+        const textPlane = MeshBuilder.CreatePlane(
+          `${cert.id}-text`,
+          { width: 2, height: 1.4 },
+          scene
+        );
+        textPlane.parent = backboard;
+        textPlane.position.z = -0.03;
+
+        const textTexture = new Texture(
+          `data:text/plain,${cert.title}`,
+          scene,
+          true,
+          true,
+          Texture.NEAREST_SAMPLINGMODE,
+          () => {
+            textTexture.update();
+          }
+        );
+
+        const textMat = new StandardMaterial(`${cert.id}-text-mat`, scene);
+        textMat.diffuseTexture = textTexture;
+        textPlane.material = textMat;
+
+        const ribbon = MeshBuilder.CreateCylinder(
+          `${cert.id}-ribbon`,
+          { height: 0.5, diameter: 0.2 },
+          scene
+        );
+        ribbon.parent = frame;
+        ribbon.position.y = -0.7;
+        ribbon.position.z = -0.1;
+        const ribbonMat = new StandardMaterial(`${cert.id}-ribbon-mat`, scene);
+        ribbonMat.diffuseColor = new Color3(0.8, 0.2, 0.2);
+        ribbon.material = ribbonMat;
+
         frame.actionManager = new ActionManager(scene);
         frame.actionManager.registerAction(
           new ExecuteCodeAction(ActionManager.OnPickTrigger, () => {
@@ -346,6 +390,17 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
             onObjectHover(null);
             glowLayer.removeIncludedOnlyMesh(frame);
           })
+        );
+      };
+
+      certifications.forEach((cert, i) => {
+        createCertificationFrame(
+          cert,
+          new BabylonVector3(
+            -6 + i * 6,
+            deskHeight + 3.5,
+            halfRoomSize - wallThickness - 0.1
+          )
         );
       });
 
