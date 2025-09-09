@@ -123,6 +123,7 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
       orbitCamera.inputs.remove(orbitCamera.inputs.attached.mousewheel);
       orbitCamera.checkCollisions = true;
       orbitCamera.collisionRadius = new BabylonVector3(0.5, 0.5, 0.5);
+      orbitCamera.minZ = 0.1;
 
       const fpCamera = new FreeCamera(
         'fpCamera',
@@ -131,6 +132,7 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
       );
       fpCamera.parent = avatar;
       fpCamera.position.y = (avatarHeight / 2) * 0.8;
+      fpCamera.minZ = 0.1;
 
       sceneRef.current = { engine, scene, orbitCamera, fpCamera, avatar };
 
@@ -431,7 +433,7 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         bookshelfPosition.y,
         bookshelfPosition.z - bookshelfDepth / 2 + shelfThickness / 2
       );
-      bookshelfBack.rotation.y = Math.PI;
+      bookshelfBack.rotation.y = 0;
       bookshelfBack.material = woodMat;
       bookshelfBack.checkCollisions = true;
 
@@ -591,6 +593,32 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
       popcornMat.diffuseColor = Color3.Red();
       popcorn.material = popcornMat;
       addInteraction(popcorn, hobbies[2], 'hobby');
+
+      const deskBarrier = MeshBuilder.CreateBox(
+        'deskBarrier',
+        { width: deskWidth + 1, height: roomHeight, depth: deskDepth + 1 },
+        scene
+      );
+      deskBarrier.position = new BabylonVector3(0, roomHeight / 2, deskPositionZ);
+      deskBarrier.visibility = 0;
+      deskBarrier.checkCollisions = true;
+
+      const bookshelfBarrier = MeshBuilder.CreateBox(
+        'bookshelfBarrier',
+        {
+          width: bookshelfWidth + 1,
+          height: roomHeight,
+          depth: bookshelfDepth + 1,
+        },
+        scene
+      );
+      bookshelfBarrier.position = new BabylonVector3(
+        bookshelfPosition.x,
+        roomHeight / 2,
+        bookshelfPosition.z
+      );
+      bookshelfBarrier.visibility = 0;
+      bookshelfBarrier.checkCollisions = true;
 
       // Add Rugs
       const rugMat1 = new StandardMaterial('rugMat1', scene);
