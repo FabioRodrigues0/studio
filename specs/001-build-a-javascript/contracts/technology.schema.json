@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Technology",
+  "description": "A technology in the tech stack.",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "A unique identifier for the technology."
+    },
+    "name": {
+      "type": "string",
+      "description": "The name of the technology."
+    }
+  },
+  "required": ["id", "name"]
+}

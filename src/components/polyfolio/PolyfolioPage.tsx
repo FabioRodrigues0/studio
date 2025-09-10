@@ -3,7 +3,7 @@
 import React, { useState, useCallback } from 'react';
 import OfficeScene from './OfficeScene';
 import { Controls } from './Controls';
-import { GithubDialog } from './GithubDialog';
+import { ProjectsBrowser } from './ProjectsBrowser';
 
 export default function PolyfolioPage() {
   const [activeCamera, setActiveCamera] = useState<
@@ -13,7 +13,7 @@ export default function PolyfolioPage() {
     id: string;
     name: string;
   } | null>(null);
-  const [isGithubOpen, setIsGithubOpen] = useState(false);
+  const [isProjectsBrowserOpen, setIsProjectsBrowserOpen] = useState(false);
 
   const handleObjectHover = useCallback(
     (
@@ -25,7 +25,7 @@ export default function PolyfolioPage() {
   );
 
   const handlePCClick = useCallback(() => {
-    setIsGithubOpen(true);
+    setIsProjectsBrowserOpen(true);
   }, []);
 
   const handleCameraChange = useCallback(
@@ -47,7 +47,9 @@ export default function PolyfolioPage() {
         onCameraChange={handleCameraChange}
         hoveredObjectName={hoveredObject?.name || null}
       />
-      <GithubDialog isOpen={isGithubOpen} onOpenChange={setIsGithubOpen} />
+      {isProjectsBrowserOpen && (
+        <ProjectsBrowser onClose={() => setIsProjectsBrowserOpen(false)} />
+      )}
     </main>
   );
 }

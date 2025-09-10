@@ -548,7 +548,7 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
       );
       soccerBall.position = new BabylonVector3(-8, 0.6, -8);
       const soccerMat = new StandardMaterial('soccerMat', scene);
-      soccerMat.diffuseColor = Color3.White();
+      soccerMat.diffuseTexture = new Texture('https://img.freepik.com/free-vector/football-ball-realistic-3d-icon-isolated-white-background_165488-3204.jpg', scene);
       soccerBall.material = soccerMat;
       addInteraction(soccerBall, hobbies[0], 'hobby');
 
@@ -565,26 +565,44 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
       moviePoster.rotation.y = Math.PI / 2;
       const posterMat = new StandardMaterial('posterMat', scene);
       posterMat.diffuseTexture = new Texture(
-        'https://picsum.photos/250/350?random=4',
+        'https://www.themoviedb.org/t/p/original/f89JAYsftDPZH8BJ8dY5VM7GSCq.jpg',
         scene
       );
       moviePoster.material = posterMat;
       addInteraction(moviePoster, hobbies[1], 'hobby');
 
-      const popcorn = MeshBuilder.CreateCylinder(
+      const popcornCup = MeshBuilder.CreateCylinder(
         hobbies[2].id,
         { height: 1, diameterTop: 0.8, diameterBottom: 0.6 },
         scene
       );
-      popcorn.position = new BabylonVector3(
+      popcornCup.position = new BabylonVector3(
         2.5,
         deskHeight + 0.5,
         deskPositionZ
       );
       const popcornMat = new StandardMaterial('popcornMat', scene);
-      popcornMat.diffuseColor = Color3.Red();
-      popcorn.material = popcornMat;
-      addInteraction(popcorn, hobbies[2], 'hobby');
+      const popcornTexture = new Texture('https://www.the3dstudio.com/textures/19/9606-popcorn-texture.jpg', scene);
+      popcornMat.diffuseTexture = popcornTexture;
+      popcornCup.material = popcornMat;
+      addInteraction(popcornCup, hobbies[2], 'hobby');
+
+      for (let i = 0; i < 20; i++) {
+        const kernel = MeshBuilder.CreateSphere(
+          `kernel${i}`,
+          { diameter: 0.2 },
+          scene
+        );
+        kernel.parent = popcornCup;
+        kernel.position = new BabylonVector3(
+          Math.random() * 0.3 - 0.15,
+          Math.random() * 0.2 + 0.4,
+          Math.random() * 0.3 - 0.15
+        );
+        const kernelMat = new StandardMaterial(`kernelMat${i}`, scene);
+        kernelMat.diffuseColor = Math.random() > 0.5 ? Color3.White() : Color3.Yellow();
+        kernel.material = kernelMat;
+      }
 
       const deskBarrier = MeshBuilder.CreateBox(
         'deskBarrier',

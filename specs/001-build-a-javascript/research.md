@@ -1,71 +1,47 @@
-# Research: 3D JavaScript Portfolio Bedroom
+# Research & Decisions for 3D JavaScript Portfolio
 
-**Date**: 2025-09-09
+**Feature**: 3D JavaScript Portfolio Bedroom
+**Spec**: `spec.md`
 
-This document summarizes the research and decisions made to resolve the `NEEDS CLARIFICATION` items from the feature specification.
+This document resolves ambiguities found in the feature specification and outlines the technical direction.
 
 ## 1. Navigation Controls
 
-**Decision**: Use `OrbitControls` from Three.js.
+- **Decision**: Navigation will be controlled via keyboard (W, A, S, D) for movement and mouse for camera rotation.
+- **Rationale**: This is a standard and intuitive control scheme for first-person 3D experiences on the web. The existing `OfficeScene.tsx` component already implements a basic version of this.
+- **Alternatives Considered**: Mouse-only navigation (less immersive), gamepad support (out of scope for initial version).
 
-**Rationale**: `OrbitControls` provides a user-friendly way to navigate a 3D scene. It allows users to orbit around a central point, zoom in and out, and pan the camera. This is ideal for exploring a room-sized environment without the steep learning curve of more complex controls like `FlyControls` or the FPS-style interaction of `PointerLockControls`.
+## 2. Project Details (`FR-004`)
 
-**Alternatives considered**:
-- `PointerLockControls`: More suited for first-person games, which is not the desired experience.
-- `FlyControls`: Can be disorienting for users not accustomed to 3D navigation.
-- `TrackballControls`: Similar to `OrbitControls`, but allows for more free-form rotation, which can lead to a confusing user experience.
+- **Decision**: The project browser will display the following fields for each project: `name`, `description`, `technologies`, `url`, and `githubUrl`.
+- **Rationale**: This information is already available in the `src/app/data/projects.json` file and provides a comprehensive overview of each project.
+- **Alternatives Considered**: Displaying more or fewer details. The current set is a good balance of information without being overwhelming.
 
-## 2. Displaying Project Details
+## 3. Certifications (`FR-005`)
 
-**Decision**: Display project details in a 2D UI modal that appears when the user interacts with the computer model in the 3D scene.
+- **Decision**: Certifications will be represented by their `title`, `issuer`, and `date`. A link to the certificate will be opened in a new tab when the representation is clicked.
+- **Rationale**: The data is available in `src/app/data/certifications.json`. Displaying these key details is sufficient for the portfolio.
+- **Alternatives Considered**: Embedding the certificate image directly (could be complex to manage and layout).
 
-**Rationale**: A 2D UI is the most effective way to present detailed information like project descriptions, technologies used, and links. It's a familiar interaction for users and avoids the complexity of rendering and interacting with text in a 3D environment.
+## 4. Tech Stack (`FR-006`)
 
-**Alternatives considered**:
-- Displaying text directly in the 3D scene: This is difficult to read and interact with, and can be computationally expensive.
-- A 3D "cityscape" visualization: While creative, this is overly complex for the scope of this project.
+- **Decision**: The tech stack will be represented by books on a bookshelf. Each book will correspond to a technology from the `techStack` array in `src/lib/constants.ts`.
+- **Rationale**: This is a creative and visually interesting way to represent the tech stack, as suggested in the user description. The data is readily available.
+- **Alternatives Considered**: A simple list (less engaging).
 
-## 3. Representing Certifications
+## 5. Hobbies (`FR-007`)
 
-**Decision**: Represent certifications as paintings on the wall of the 3D bedroom. When a user clicks on a painting, a UI element will display the certification details.
+- **Decision**: Hobbies will be represented by objects in the room, as defined in the `hobbies` array in `src/lib/constants.ts`.
+- **Rationale**: This adds personality to the scene and makes it more engaging, as requested by the user. The data is readily available.
+- **Alternatives Considered**: A dedicated "hobbies" section with text descriptions (less immersive).
 
-**Rationale**: This is a literal and intuitive representation that fits the bedroom theme. It allows for a clean and visually appealing presentation of the certifications.
+## 6. Performance Metrics (`FR-008`)
 
-**Alternatives considered**:
-- 3D models of trophies or medals: This could be visually cluttered and might not be as easily recognizable as paintings.
-- Abstract representations: These could be confusing for the user.
+- **Decision**: The target frame rate is a minimum of 30fps on modern hardware. Loading time should be under 5 seconds on a standard broadband connection.
+- **Rationale**: These are reasonable performance targets for a web-based 3D application to ensure a "fluid and enjoyable" experience.
+- **Alternatives Considered**: Higher frame rate targets (might require more optimization than is feasible for the initial version).
 
-## 4. Representing the Tech Stack
+## 7. Technical Build Context
 
-**Decision**: Represent the tech stack as a collection of books on a bookshelf. Each book's spine will feature the logo of a technology. Clicking on a book will reveal more information.
-
-**Rationale**: This is a creative and thematic way to visualize the tech stack. It's more engaging than a simple list and fits well within the bedroom environment.
-
-**Alternatives considered**:
-- A simple 2D list: Less engaging and doesn't take advantage of the 3D environment.
-- Other 3D objects: Books are a natural fit for a bookshelf and are easily associated with knowledge and learning.
-
-## 5. Representing Hobbies
-
-**Decision**: Use literal 3D object representations for hobbies.
-
-**Rationale**: Direct, recognizable objects are the clearest way to communicate hobbies. For example, a game controller for gaming, a book for reading, or a musical instrument for music. These objects will be placed naturally within the 3D room to add to the ambiance.
-
-**Alternatives considered**:
-- Abstract visualizations: These can be ambiguous and less impactful than direct representations.
-- Interactive dioramas: While immersive, creating a detailed diorama for each hobby is beyond the current scope.
-
-## 6. Metrics for a Fluid and Enjoyable User Experience
-
-**Decision**: Focus on both performance and engagement metrics.
-
-**Rationale**: A good user experience is a combination of a technically performant application and an engaging interface.
-
-**Performance Metrics (Fluidity)**:
-- **Frame Rate (FPS)**: Target 60 FPS for smooth visuals.
-- **Loading Time**: Aim for an initial load time of less than 5 seconds.
-- **Draw Calls & Memory Usage**: Monitor and optimize to ensure the application runs efficiently on a variety of devices.
-
-**Engagement Metrics (Enjoyment)**:
-- **Session Duration**: Track how long users spend in the application.
-- **Interaction with 3D Elements**: Monitor which objects users interact with to understand what they find most engaging.
+- **User provided constraint**: It is not necessary to run the development server (`npm run dev`) for every task.
+- **Decision**: The build command (`npm run build`) MUST be run after any code change to ensure the project still compiles and there are no build errors. This will be a required step in the task list for any code modification tasks.

@@ -24,8 +24,8 @@
 - [x] T021 [P] Create the 3D model for the computer.
 - [x] T022 [P] Create the 3D model for the bookshelf.
 - [x] T023 [P] Create the 3D models for the certification frames.
-- [ ] T024 [P] Create the 3D models for the hobby objects (soccer ball, movie posters, popcorn).
-- [ ] T025 Implement the logic to display projects when the computer is clicked in `src/components/polyfolio/AITool.tsx`.
+- [x] T024 [P] Create the 3D models for the hobby objects (soccer ball, movie posters, popcorn).
+- [x] T025 Implement a component to display projects in a simulated browser when the computer is clicked.
 - [ ] T026 Implement the logic to display certifications when the frames are clicked.
 - [ ] T027 Implement the logic to display the tech stack on the bookshelf.
 - [ ] T028 Implement the logic to display the hobby objects.
