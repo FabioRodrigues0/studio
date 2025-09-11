@@ -28,7 +28,7 @@ To get a local copy up and running, follow these simple steps.
 
 1.  Clone the repo
     ```sh
-    git clone https://github.com/your_username/your_project_name.git
+    git clone https://github.com/FabioRodrigues0/studio.git
     ```
 2.  Install NPM packages
     ```sh
