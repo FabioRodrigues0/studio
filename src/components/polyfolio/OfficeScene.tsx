@@ -756,10 +756,7 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
           moveDirection.normalize();
           avatar.moveWithCollisions(moveDirection.scale(playerSpeed));
 
-          if (scene.activeCamera === orbitCamera && !isZoomedRef.current) {
-            const angle = Math.atan2(moveDirection.x, moveDirection.z);
-            avatar.rotation.y = angle;
-          }
+          
         }
 
         if (scene.activeCamera === fpCamera) {
@@ -841,7 +838,7 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
       if (!monitorScreen) return;
 
       const targetPosition = monitorScreen.getAbsolutePosition();
-      const endPosition = new BabylonVector3(targetPosition.x, targetPosition.y, targetPosition.z - 2);
+      const endPosition = new BabylonVector3(targetPosition.x, targetPosition.y, targetPosition.z - 4);
 
       Animation.CreateAndStartAnimation(
         'zoom-in-tgt',
