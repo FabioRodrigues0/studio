@@ -13,7 +13,7 @@ export default function PolyfolioPage() {
     id: string;
     name: string;
   } | null>(null);
-  const [isProjectsBrowserOpen, setIsProjectsBrowserOpen] = useState(false);
+  const [isComputerScreenActive, setIsComputerScreenActive] = useState(false);
 
   const handleObjectHover = useCallback(
     (
@@ -25,7 +25,7 @@ export default function PolyfolioPage() {
   );
 
   const handlePCClick = useCallback(() => {
-    setIsProjectsBrowserOpen(true);
+    setIsComputerScreenActive(true);
   }, []);
 
   const handleCameraChange = useCallback(
@@ -41,15 +41,14 @@ export default function PolyfolioPage() {
         activeCamera={activeCamera}
         onObjectHover={handleObjectHover}
         onPCClick={handlePCClick}
+        isZoomed={isComputerScreenActive}
+        setIsZoomed={setIsComputerScreenActive}
       />
       <Controls
         activeCamera={activeCamera}
         onCameraChange={handleCameraChange}
         hoveredObjectName={hoveredObject?.name || null}
       />
-      {isProjectsBrowserOpen && (
-        <ProjectsBrowser onClose={() => setIsProjectsBrowserOpen(false)} />
-      )}
     </main>
   );
 }
