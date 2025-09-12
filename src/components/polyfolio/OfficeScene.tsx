@@ -47,7 +47,7 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
   setIsZoomed,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const sceneRef = useRef<{ 
+  const sceneRef = useRef<{
     engine: Engine;
     scene: Scene;
     orbitCamera: ArcRotateCamera;
@@ -55,7 +55,14 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
     avatar: Mesh;
   } | null>(null);
   const inputMap = useRef<Record<string, boolean>>({});
-  const initialOrbitCameraState = useRef<{ position: Vector3; target: Vector3, alpha: number, beta: number, radius: number, fov: number } | null>(null);
+  const initialOrbitCameraState = useRef<{
+    position: Vector3;
+    target: Vector3;
+    alpha: number;
+    beta: number;
+    radius: number;
+    fov: number;
+  } | null>(null);
   const uiContainerRef = useRef<GUI.Rectangle | null>(null);
   const isZoomedRef = useRef(isZoomed);
 
@@ -287,7 +294,11 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         { width: 2.2, height: 1.4, depth: 0.1 },
         scene
       );
-      monitorBezel.position = new BabylonVector3(-2, deskHeight + 0.7, deskPositionZ);
+      monitorBezel.position = new BabylonVector3(
+        -2,
+        deskHeight + 0.7,
+        deskPositionZ
+      );
       monitorBezel.material = metalMat;
       monitorBezel.checkCollisions = true;
 
@@ -307,7 +318,11 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         { height: 0.6, diameter: 0.2 },
         scene
       );
-      monitorStand.position = new BabylonVector3(-2, deskHeight + 0.3, deskPositionZ + 0.2);
+      monitorStand.position = new BabylonVector3(
+        -2,
+        deskHeight + 0.3,
+        deskPositionZ + 0.2
+      );
       monitorStand.material = metalMat;
       monitorStand.checkCollisions = true;
 
@@ -317,11 +332,18 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         { width: 0.8, height: 2.5, depth: 2 },
         scene
       );
-      pcTower.position = new BabylonVector3(2, deskHeight + 1.25, deskPositionZ);
+      pcTower.position = new BabylonVector3(
+        2,
+        deskHeight + 1.25,
+        deskPositionZ
+      );
       pcTower.material = metalMat;
       pcTower.checkCollisions = true;
 
-      const createCertificationFrame = (cert: Certification, position: Vector3) => {
+      const createCertificationFrame = (
+        cert: Certification,
+        position: Vector3
+      ) => {
         const frame = MeshBuilder.CreateBox(
           cert.id,
           { width: 2.5, height: 1.8, depth: 0.1 },
@@ -373,7 +395,7 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         deskPositionZ + 1
       );
 
-      const bookshelf = new Mesh("bookshelf", scene);
+      const bookshelf = new Mesh('bookshelf', scene);
       bookshelf.position = bookshelfPosition;
 
       const bookshelfBack = MeshBuilder.CreateBox(
@@ -420,7 +442,8 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
 
       const numShelves = 4;
       for (let i = 0; i < numShelves; i++) {
-        const shelfY = (bookshelfHeight / (numShelves + 1)) * (i + 1) - bookshelfHeight / 2;
+        const shelfY =
+          (bookshelfHeight / (numShelves + 1)) * (i + 1) - bookshelfHeight / 2;
         const shelf = MeshBuilder.CreateBox(
           `bookshelf_shelf_${i}`,
           {
@@ -500,7 +523,10 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
       );
       soccerBall.position = new BabylonVector3(-8, 0.6, -8);
       const soccerMat = new StandardMaterial('soccerMat', scene);
-      soccerMat.diffuseTexture = new Texture('https://img.freepik.com/free-vector/football-ball-realistic-3d-icon-isolated-white-background_165488-3204.jpg', scene);
+      soccerMat.diffuseTexture = new Texture(
+        'https://img.freepik.com/free-vector/football-ball-realistic-3d-icon-isolated-white-background_165488-3204.jpg',
+        scene
+      );
       soccerBall.material = soccerMat;
       addInteraction(soccerBall, hobbies[0], 'hobby');
 
@@ -534,7 +560,10 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         deskPositionZ
       );
       const popcornMat = new StandardMaterial('popcornMat', scene);
-      const popcornTexture = new Texture('https://www.the3dstudio.com/textures/19/9606-popcorn-texture.jpg', scene);
+      const popcornTexture = new Texture(
+        'https://www.the3dstudio.com/textures/19/9606-popcorn-texture.jpg',
+        scene
+      );
       popcornMat.diffuseTexture = popcornTexture;
       popcornCup.material = popcornMat;
       addInteraction(popcornCup, hobbies[2], 'hobby');
@@ -552,7 +581,8 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
           Math.random() * 0.3 - 0.15
         );
         const kernelMat = new StandardMaterial(`kernelMat${i}`, scene);
-        kernelMat.diffuseColor = Math.random() > 0.5 ? Color3.White() : Color3.Yellow();
+        kernelMat.diffuseColor =
+          Math.random() > 0.5 ? Color3.White() : Color3.Yellow();
         kernel.material = kernelMat;
       }
 
@@ -561,7 +591,11 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         { width: deskWidth + 1, height: roomHeight, depth: deskDepth + 1 },
         scene
       );
-      deskBarrier.position = new BabylonVector3(0, roomHeight / 2, deskPositionZ);
+      deskBarrier.position = new BabylonVector3(
+        0,
+        roomHeight / 2,
+        deskPositionZ
+      );
       deskBarrier.visibility = 0;
       deskBarrier.checkCollisions = true;
       deskBarrier.isPickable = false;
@@ -605,82 +639,85 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         false // No pointer events on the texture itself
       );
 
-      const uiContainer = new GUI.Rectangle("ui-container");
+      const uiContainer = new GUI.Rectangle('ui-container');
       uiContainer.thickness = 0;
       uiContainer.isVisible = false;
       advancedTexture.addControl(uiContainer);
       uiContainerRef.current = uiContainer;
 
-      const projectsBrowser = new GUI.Rectangle("projects-browser");
-      projectsBrowser.width = "100%";
-      projectsBrowser.height = "100%";
+      const projectsBrowser = new GUI.Rectangle('projects-browser');
+      projectsBrowser.width = '100%';
+      projectsBrowser.height = '100%';
       projectsBrowser.cornerRadius = 10;
-      projectsBrowser.color = "#333";
+      projectsBrowser.color = '#333';
       projectsBrowser.thickness = 4;
-      projectsBrowser.background = "#1a1a1a";
+      projectsBrowser.background = '#1a1a1a';
       uiContainer.addControl(projectsBrowser);
 
-      const titleBar = new GUI.Rectangle("title-bar");
-      titleBar.width = "100%";
-      titleBar.height = "60px";
-      titleBar.background = "#444";
+      const titleBar = new GUI.Rectangle('title-bar');
+      titleBar.width = '100%';
+      titleBar.height = '60px';
+      titleBar.background = '#444';
       titleBar.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
       projectsBrowser.addControl(titleBar);
 
-      const title = new GUI.TextBlock("title", "Fabio's Projects");
-      title.color = "white";
+      const title = new GUI.TextBlock('title', "Fabio's Projects");
+      title.color = 'white';
       title.fontSize = 24;
       titleBar.addControl(title);
 
-      const closeButton = GUI.Button.CreateSimpleButton("close-button", "X");
-      closeButton.width = "40px";
-      closeButton.height = "40px";
-      closeButton.color = "white";
-      closeButton.background = "#d9534f";
+      const closeButton = GUI.Button.CreateSimpleButton('close-button', 'X');
+      closeButton.width = '40px';
+      closeButton.height = '40px';
+      closeButton.color = 'white';
+      closeButton.background = '#d9534f';
       closeButton.cornerRadius = 5;
       closeButton.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
       closeButton.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
-      closeButton.left = "-10px";
-      closeButton.top = "10px";
+      closeButton.left = '-10px';
+      closeButton.top = '10px';
       closeButton.onPointerUpObservable.add(() => {
         setIsZoomed(false);
       });
       titleBar.addControl(closeButton);
 
       const grid = new GUI.Grid();
-      grid.paddingTop = "60px"; // leave space for title bar
+      grid.paddingTop = '60px'; // leave space for title bar
       projectsBrowser.addControl(grid);
 
       grid.addColumnDefinition(250, true); // width in pixels
       grid.addColumnDefinition(1, false); // relative width
 
-      const projectsList = new GUI.ScrollViewer("projects-list");
-      projectsList.background = "#2a2a2a";
+      const projectsList = new GUI.ScrollViewer('projects-list');
+      projectsList.background = '#2a2a2a';
       grid.addControl(projectsList, 0, 0);
 
       const projectsListPanel = new GUI.StackPanel();
       projectsList.addControl(projectsListPanel);
 
-      const webViewer = new GUI.Rectangle("web-viewer");
-      webViewer.background = "white";
+      const webViewer = new GUI.Rectangle('web-viewer');
+      webViewer.background = 'white';
       webViewer.thickness = 0;
       grid.addControl(webViewer, 0, 1);
 
-      const placeholderText = new GUI.TextBlock("placeholder", "Select a project to view");
-      placeholderText.color = "black";
+      const placeholderText = new GUI.TextBlock(
+        'placeholder',
+        'Select a project to view'
+      );
+      placeholderText.color = 'black';
       webViewer.addControl(placeholderText);
 
-      projects.forEach(project => {
+      projects.forEach((project) => {
         const button = GUI.Button.CreateSimpleButton(project.id, project.name);
-        button.height = "50px";
-        button.width = "95%";
-        button.color = "white";
-        button.background = "#555";
-        button.paddingTop = "5px";
-        button.paddingBottom = "5px";
+        button.height = '50px';
+        button.width = '95%';
+        button.color = 'white';
+        button.background = '#555';
+        button.paddingTop = '5px';
+        button.paddingBottom = '5px';
         button.onPointerUpObservable.add(() => {
-            const textControl = webViewer.children[0] as GUI.TextBlock;
-            textControl.text = `Loading ${project.name}...\n\n(Live web view is not supported in this demo)`;
+          const textControl = webViewer.children[0] as GUI.TextBlock;
+          textControl.text = `Loading ${project.name}...\n\n(Live web view is not supported in this demo)`;
         });
         projectsListPanel.addControl(button);
       });
@@ -765,7 +802,7 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         fpCamera.attachControl(canvasRef.current, true);
         engine.getRenderingCanvas()?.focus();
       }, 50);
-    } else { 
+    } else {
       // 'third-person'
       scene.activeCamera = orbitCamera;
       avatar.getChildMeshes().forEach((m) => (m.isVisible = true));
@@ -804,6 +841,7 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
       if (!monitorScreen) return;
 
       const targetPosition = monitorScreen.getAbsolutePosition();
+      const endPosition = new BabylonVector3(targetPosition.x, targetPosition.y, targetPosition.z - 2);
 
       Animation.CreateAndStartAnimation(
         'zoom-in-tgt',
@@ -816,39 +854,19 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         Animation.ANIMATIONLOOPMODE_CONSTANT,
         new CubicEase()
       );
+
       Animation.CreateAndStartAnimation(
-        'zoom-in-alpha',
+        'zoom-in-pos',
         orbitCamera,
-        'alpha',
+        'position',
         60,
         60,
-        orbitCamera.alpha,
-        -Math.PI / 2,
+        orbitCamera.position,
+        endPosition,
         Animation.ANIMATIONLOOPMODE_CONSTANT,
         new CubicEase()
       );
-      Animation.CreateAndStartAnimation(
-        'zoom-in-beta',
-        orbitCamera,
-        'beta',
-        60,
-        60,
-        orbitCamera.beta,
-        Math.PI / 2.2,
-        Animation.ANIMATIONLOOPMODE_CONSTANT,
-        new CubicEase()
-      );
-      Animation.CreateAndStartAnimation(
-        'zoom-in-radius',
-        orbitCamera,
-        'radius',
-        60,
-        60,
-        orbitCamera.radius,
-        1.2,
-        Animation.ANIMATIONLOOPMODE_CONSTANT,
-        new CubicEase()
-      );
+
       Animation.CreateAndStartAnimation(
         'zoom-in-fov',
         orbitCamera,
@@ -858,10 +876,7 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         orbitCamera.fov,
         0.4,
         Animation.ANIMATIONLOOPMODE_CONSTANT,
-        new CubicEase(),
-        () => {
-          orbitCamera.attachControl(canvasRef.current, true);
-        }
+        new CubicEase()
       );
     } else {
       if (initialOrbitCameraState.current) {
@@ -878,35 +893,13 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
           new CubicEase()
         );
         Animation.CreateAndStartAnimation(
-          'zoom-out-alpha',
+          'zoom-out-pos',
           orbitCamera,
-          'alpha',
+          'position',
           60,
           60,
-          orbitCamera.alpha,
-          initialOrbitCameraState.current.alpha,
-          Animation.ANIMATIONLOOPMODE_CONSTANT,
-          new CubicEase()
-        );
-        Animation.CreateAndStartAnimation(
-          'zoom-out-beta',
-          orbitCamera,
-          'beta',
-          60,
-          60,
-          orbitCamera.beta,
-          initialOrbitCameraState.current.beta,
-          Animation.ANIMATIONLOOPMODE_CONSTANT,
-          new CubicEase()
-        );
-        Animation.CreateAndStartAnimation(
-          'zoom-out-radius',
-          orbitCamera,
-          'radius',
-          60,
-          60,
-          orbitCamera.radius,
-          initialOrbitCameraState.current.radius,
+          orbitCamera.position,
+          initialOrbitCameraState.current.position,
           Animation.ANIMATIONLOOPMODE_CONSTANT,
           new CubicEase()
         );
