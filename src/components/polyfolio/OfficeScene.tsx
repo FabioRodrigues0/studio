@@ -844,7 +844,7 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         60,
         60,
         orbitCamera.radius,
-        0.88,
+        0.56,
         Animation.ANIMATIONLOOPMODE_CONSTANT,
         new CubicEase()
       );
