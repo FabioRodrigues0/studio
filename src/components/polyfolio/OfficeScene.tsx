@@ -788,6 +788,7 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
     const { scene, orbitCamera } = sceneRef.current;
 
     if (isZoomed) {
+      orbitCamera.detachControl();
       if (!initialOrbitCameraState.current) {
         initialOrbitCameraState.current = {
           position: orbitCamera.position.clone(),
@@ -857,10 +858,14 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         orbitCamera.fov,
         0.4,
         Animation.ANIMATIONLOOPMODE_CONSTANT,
-        new CubicEase()
+        new CubicEase(),
+        () => {
+          orbitCamera.attachControl(canvasRef.current, true);
+        }
       );
     } else {
       if (initialOrbitCameraState.current) {
+        orbitCamera.detachControl();
         Animation.CreateAndStartAnimation(
           'zoom-out-tgt',
           orbitCamera,
@@ -917,6 +922,7 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
           new CubicEase(),
           () => {
             initialOrbitCameraState.current = null;
+            orbitCamera.attachControl(canvasRef.current, true);
           }
         );
       }
