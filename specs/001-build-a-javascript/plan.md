@@ -1,7 +1,7 @@
 # Implementation Plan: 3D JavaScript Portfolio Bedroom
 
-**Branch**: `001-build-a-javascript` | **Date**: 2025-09-09 | **Spec**: [specs/001-build-a-javascript/spec.md](specs/001-build-a-javascript/spec.md)
-**Input**: Feature specification from `/specs/001-build-a-javascript/spec.md`
+**Branch**: `001-build-a-javascript` | **Date**: 2025-09-10 | **Spec**: [spec.md](spec.md)
+**Input**: Feature specification from `specs/001-build-a-javascript/spec.md`
 
 ## Execution Flow (/plan command scope)
 
@@ -32,53 +32,57 @@
 
 ## Summary
 
-The feature is a 3D JavaScript portfolio representing a bedroom. Users can interact with objects to learn about the owner's projects, certifications, skills, and hobbies. The technical approach will involve using Three.js for the 3D environment within a Next.js and React application.
+This feature will create an interactive 3D portfolio representing a bedroom. Users can explore the room to find and interact with objects representing the owner's projects, certifications, and skills. The primary technical approach is to use Next.js and Babylon.js to create the 3D experience, with data for the portfolio items stored in local JSON files.
 
 ## Technical Context
 
-**Language/Version**: TypeScript, JavaScript (ES2021+)
-**Primary Dependencies**: Next.js, React, Three.js, Tailwind CSS
-**Storage**: JSON files for projects, certifications, and other data.
-**Testing**: Jest, React Testing Library
-**Target Platform**: Web browsers
+**Language/Version**: TypeScript (v5)
+**Primary Dependencies**: Next.js, React, Babylon.js
+**Storage**: JSON files (`projects.json`, `certifications.json`)
+**Testing**: Jest
+**Target Platform**: Web Browser
 **Project Type**: Web Application
-**Performance Goals**: ~60 fps for the 3D scene, initial load time < 5 seconds.
-**Constraints**: Must be responsive and provide a good experience on both desktop and mobile devices.
+**Performance Goals**: >30fps, <5s load time
+**Constraints**: Build (`npm run build`) must succeed after any code change.
 **Scale/Scope**: Single-page portfolio application.
-**Development Workflow**: a cada task deve ser feito o git commit referente a task, utilizando o conventional commits style
 
 ## Constitution Check
 
 _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
 **Simplicity**:
-- Projects: 1 (Web Application)
+
+- Projects: 1 (Next.js app)
 - Using framework directly? Yes
 - Single data model? Yes
 - Avoiding patterns? Yes
 
 **Architecture**:
-- EVERY feature as library? No, this is a standalone application.
+
+- EVERY feature as library? No, this is a single application.
 - Libraries listed: N/A
 - CLI per library: N/A
 - Library docs: N/A
 
 **Testing (NON-NEGOTIABLE)**:
+
 - RED-GREEN-Refactor cycle enforced? Yes
 - Git commits show tests before implementation? Yes
 - Order: Contract→Integration→E2E→Unit strictly followed? Yes
 - Real dependencies used? Yes
-- Integration tests for: new libraries, contract changes, shared schemas? N/A
+- Integration tests for: new libraries, contract changes, shared schemas? Yes
 - FORBIDDEN: Implementation before test, skipping RED phase. Yes
 
 **Observability**:
-- Structured logging included? Yes
-- Frontend logs → backend? N/A
+
+- Structured logging included? No
+- Frontend logs → backend? No
 - Error context sufficient? Yes
 
 **Versioning**:
-- Version number assigned? 0.1.0
-- BUILD increments on every change? Yes
+
+- Version number assigned? No
+- BUILD increments on every change? No
 - Breaking changes handled? N/A
 
 ## Project Structure
@@ -92,6 +96,10 @@ specs/001-build-a-javascript/
 ├── data-model.md        # Phase 1 output (/plan command)
 ├── quickstart.md        # Phase 1 output (/plan command)
 ├── contracts/           # Phase 1 output (/plan command)
+│   ├── project.schema.json
+│   ├── certification.schema.json
+│   ├── technology.schema.json
+│   └── hobby.schema.json
 └── tasks.md             # Phase 2 output (/tasks command - NOT created by /plan)
 ```
 
@@ -99,80 +107,23 @@ specs/001-build-a-javascript/
 
 ```
 # Option 2: Web application (when "frontend" + "backend" detected)
-src/
-├── app/
-├── components/
-├── hooks/
-├── lib/
-└── services/
-tests/
-├── component/
-└── integration/
+frontend/
+├── src/
+│   ├── components/
+│   ├── pages/
+│   └── services/
+└── tests/
 ```
 
-**Structure Decision**: Option 2: Web application
+**Structure Decision**: Option 2: Web Application. The project is a Next.js application, which acts as both frontend and backend.
 
 ## Phase 0: Outline & Research
 
-1. **Extract unknowns from Technical Context** above:
-   - For each NEEDS CLARIFICATION → research task
-   - For each dependency → best practices task
-   - For each integration → patterns task
-
-2. **Generate and dispatch research agents**:
-
-   ```
-   For each unknown in Technical Context:
-     Task: "Research {unknown} for {feature context}"
-   For each technology choice:
-     Task: "Find best practices for {tech} in {domain}"
-   ```
-   - Research navigation controls for 3D space (keyboard, mouse).
-   - Research how to display project details (e.g., description, technologies, links).
-   - Research how to represent certifications (e.g., images, text).
-   - Research how to represent the tech stack on a bookshelf.
-   - Research how to represent hobbies.
-   - Research metrics for "fluid and enjoyable" user experience (e.g., frame rate, loading time).
-
-3. **Consolidate findings** in `research.md` using format:
-   - Decision: [what was chosen]
-   - Rationale: [why chosen]
-   - Alternatives considered: [what else evaluated]
-
-**Output**: research.md with all NEEDS CLARIFICATION resolved
+Completed. See `research.md`.
 
 ## Phase 1: Design & Contracts
 
-_Prerequisites: research.md complete_
-
-1. **Extract entities from feature spec** → `data-model.md`:
-   - Entity name, fields, relationships
-   - Validation rules from requirements
-   - State transitions if applicable
-
-2. **Generate API contracts** from functional requirements:
-   - For each user action → endpoint
-   - Use standard REST/GraphQL patterns
-   - Output OpenAPI/GraphQL schema to `/contracts/`
-
-3. **Generate contract tests** from contracts:
-   - One test file per endpoint
-   - Assert request/response schemas
-   - Tests must fail (no implementation yet)
-
-4. **Extract test scenarios** from user stories:
-   - Each story → integration test scenario
-   - Quickstart test = story validation steps
-
-5. **Update agent file incrementally** (O(1) operation):
-   - Run `/scripts/update-agent-context.sh [claude|gemini|copilot]` for your AI assistant
-   - If exists: Add only NEW tech from current plan
-   - Preserve manual additions between markers
-   - Update recent changes (keep last 3)
-   - Keep under 150 lines for token efficiency
-   - Output to repository root
-
-**Output**: data-model.md, /contracts/*, failing tests, quickstart.md, agent-specific file
+Completed. See `data-model.md`, `contracts/`, and `quickstart.md`.
 
 ## Phase 2: Task Planning Approach
 
@@ -180,20 +131,19 @@ _This section describes what the /tasks command will do - DO NOT execute during 
 
 **Task Generation Strategy**:
 
-- Load `/templates/tasks-template.md` as base
-- Generate tasks from Phase 1 design docs (contracts, data model, quickstart)
-- Each contract → contract test task [P]
-- Each entity → model creation task [P]
-- Each user story → integration test task
-- Implementation tasks to make tests pass
+- Load `/templates/tasks-template.md` as base.
+- Generate tasks from the `quickstart.md` verification steps.
+- For each data model in `data-model.md`, create a task to validate the corresponding JSON file against its schema in `contracts/`.
+- Create tasks for implementing the UI components and interactions described in the spec.
+- For each code modification, include a step to run `npm run build` to ensure the build is not broken.
 
 **Ordering Strategy**:
 
-- TDD order: Tests before implementation
-- Dependency order: Models before services before UI
-- Mark [P] for parallel execution (independent files)
+- TDD order: Tests before implementation.
+- Dependency order: Data schemas and models first, then UI components, then interactions.
+- Mark [P] for parallel execution (e.g., creating multiple components that don't depend on each other).
 
-**Estimated Output**: 25-30 numbered, ordered tasks in tasks.md
+**Estimated Output**: ~15-20 numbered, ordered tasks in `tasks.md`.
 
 **IMPORTANT**: This phase is executed by the /tasks command, NOT by /plan
 
@@ -207,12 +157,7 @@ _These phases are beyond the scope of the /plan command_
 
 ## Complexity Tracking
 
-_Fill ONLY if Constitution Check has violations that must be justified_
-
-| Violation                  | Why Needed         | Simpler Alternative Rejected Because |
-| -------------------------- | ------------------ | ------------------------------------ |
-| [e.g., 4th project]        | [current need]     | [why 3 projects insufficient]        |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient]  |
+No violations to report.
 
 ## Progress Tracking
 
@@ -220,19 +165,19 @@ _This checklist is updated during execution flow_
 
 **Phase Status**:
 
-- [X] Phase 0: Research complete (/plan command)
-- [ ] Phase 1: Design complete (/plan command)
-- [ ] Phase 2: Task planning complete (/plan command - describe approach only)
+- [x] Phase 0: Research complete (/plan command)
+- [x] Phase 1: Design complete (/plan command)
+- [x] Phase 2: Task planning complete (/plan command - describe approach only)
 - [ ] Phase 3: Tasks generated (/tasks command)
 - [ ] Phase 4: Implementation complete
 - [ ] Phase 5: Validation passed
 
 **Gate Status**:
 
-- [X] Initial Constitution Check: PASS
-- [ ] Post-Design Constitution Check: PASS
-- [ ] All NEEDS CLARIFICATION resolved
-- [ ] Complexity deviations documented
+- [x] Initial Constitution Check: PASS
+- [x] Post-Design Constitution Check: PASS
+- [x] All NEEDS CLARIFICATION resolved
+- [x] Complexity deviations documented
 
 ---
 

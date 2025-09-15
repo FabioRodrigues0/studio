@@ -1,68 +1,41 @@
-# Quickstart: 3D JavaScript Portfolio Bedroom
+# Quickstart: 3D JavaScript Portfolio
 
-**Date**: 2025-09-09
-
-This guide provides instructions on how to set up and run the 3D JavaScript Portfolio Bedroom project.
+This guide provides the steps to get the 3D JavaScript Portfolio running locally.
 
 ## Prerequisites
 
 - Node.js (v18 or later)
-- npm or yarn
+- npm (v9 or later)
 
-## Installation
+## 1. Installation
 
-1. Clone the repository.
-2. Install the dependencies:
+Clone the repository and install the dependencies:
 
-   ```bash
-   npm install
-   ```
+```bash
+npm install
+```
 
-   or
+## 2. Running the Application
 
-   ```bash
-   yarn install
-   ```
-
-## Running the Application
-
-To start the development server, run:
+Start the development server:
 
 ```bash
 npm run dev
 ```
 
-or
+The application will be available at [http://localhost:9002](http://localhost:9002).
 
-```bash
-yarn dev
-```
+## 3. Verification
 
-Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
+To verify that the application is working correctly, follow these steps:
 
-## Testing
-
-To run the tests, use the following command:
-
-```bash
-npm test
-```
-
-or
-
-```bash
-yarn test
-```
-
-This will run both component and integration tests.
-
-## Data
-
-The application's data is sourced from JSON files located in the `src/app/data` directory:
-
-- `projects.json`: Contains information about the projects displayed on the computer.
-- `certifications.json`: Contains information about the certifications displayed on the wall.
-- `technologies.json`: Contains information about the technologies displayed on the bookshelf.
-- `hobbies.json`: Contains information about the hobbies represented in the room.
-
-These files must conform to the JSON schemas defined in `specs/001-build-a-javascript/contracts/`.
+1.  Open your web browser to [http://localhost:9002](http://localhost:9002).
+2.  You should see a 3D representation of a bedroom.
+3.  Use the **W, A, S, D** keys to move around the room.
+4.  Use the **mouse** to look around.
+5.  Navigate to the computer on the desk and click on it.
+6.  A project browser window should appear, displaying a list of projects.
+7.  Click on a project in the list to view it in the embedded browser.
+8.  Close the project browser by clicking the 'X' button.
+9.  Find the paintings on the wall. Clicking on them should open a new tab with the certification link.
+10. Find the bookshelf and hover over the books to see the names of the technologies.

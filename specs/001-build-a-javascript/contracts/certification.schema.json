@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Certification",
+  "description": "A professional certification.",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "description": "The name of the certification."
+    },
+    "issuer": {
+      "type": "string",
+      "description": "The organization that issued the certification."
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "The date the certification was obtained."
+    },
+    "link": {
+      "type": "string",
+      "format": "uri",
+      "description": "A link to the certification credential."
+    }
+  },
+  "required": ["title", "link"]
+}

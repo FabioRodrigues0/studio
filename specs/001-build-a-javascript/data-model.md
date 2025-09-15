@@ -1,34 +1,30 @@
-# Data Model: 3D JavaScript Portfolio Bedroom
+# Data Model for 3D JavaScript Portfolio
 
-**Date**: 2025-09-09
+**Feature**: 3D JavaScript Portfolio Bedroom
 
-This document defines the data structures for the key entities in the 3D JavaScript Portfolio Bedroom feature.
+This document defines the data structures for the key entities in the feature.
 
 ## 1. Project
 
 Represents a professional or learning project.
 
-**Attributes**:
+- **`name`**: `string` - The name of the project.
+- **`description`**: `string` - A brief description of the project.
+- **`technologies`**: `string[]` - A list of technologies used in the project.
+- **`url`**: `string` (URL) - A link to the live project.
+- **`githubUrl`**: `string` (URL) - A link to the project's GitHub repository.
 
-- `id` (string, required): A unique identifier for the project.
-- `name` (string, required): The name of the project.
-- `description` (string, required): A detailed description of the project.
-- `technologies` (array of strings, required): A list of technology IDs used in the project.
-- `imageUrl` (string, required): URL for an image representing the project.
-- `projectUrl` (string, optional): A link to the live project.
-- `repositoryUrl` (string, optional): A link to the project's source code repository.
+**Validation Rules**:
+- `name` and `url` are required.
 
 **Example**:
-
 ```json
 {
-  "id": "proj-001",
-  "name": "3D Portfolio",
-  "description": "An interactive 3D portfolio website built with Three.js and React.",
-  "technologies": ["tech-001", "tech-002", "tech-003"],
-  "imageUrl": "/images/projects/portfolio.png",
-  "projectUrl": "https://portfolio.example.com",
-  "repositoryUrl": "https://github.com/user/portfolio"
+  "name": "Project 1",
+  "description": "This is the first project.",
+  "technologies": ["React", "TypeScript"],
+  "url": "https://example.com/project1",
+  "githubUrl": "https://github.com/user/project1"
 }
 ```
 
@@ -36,25 +32,21 @@ Represents a professional or learning project.
 
 Represents a professional certification.
 
-**Attributes**:
+- **`title`**: `string` - The name of the certification.
+- **`issuer`**: `string` - The organization that issued the certification.
+- **`date`**: `string` - The date the certification was obtained.
+- **`link`**: `string` (URL) - A link to the certification credential.
 
-- `id` (string, required): A unique identifier for the certification.
-- `name` (string, required): The name of the certification.
-- `issuingOrganization` (string, required): The organization that issued the certification.
-- `dateObtained` (string, required): The date the certification was obtained (YYYY-MM-DD).
-- `imageUrl` (string, required): URL for an image of the certificate or logo.
-- `verificationUrl` (string, optional): A link to verify the certification.
+**Validation Rules**:
+- `title` and `link` are required.
 
 **Example**:
-
 ```json
 {
-  "id": "cert-001",
-  "name": "Certified JavaScript Developer",
-  "issuingOrganization": "JavaScript Institute",
-  "dateObtained": "2024-08-15",
-  "imageUrl": "/images/certifications/js-developer.png",
-  "verificationUrl": "https://certificates.example.com/verify/12345"
+  "title": "Certified Kubernetes Administrator (CKA)",
+  "issuer": "The Linux Foundation",
+  "date": "2023-01-15",
+  "link": "https://www.credly.com/badges/badge-id"
 }
 ```
 
@@ -62,42 +54,34 @@ Represents a professional certification.
 
 Represents a technology in the tech stack.
 
-**Attributes**:
+- **`id`**: `string` - A unique identifier for the technology.
+- **`name`**: `string` - The name of the technology.
 
-- `id` (string, required): A unique identifier for the technology.
-- `name` (string, required): The name of the technology.
-- `type` (string, required): The type of technology (e.g., "Language", "Framework", "Library", "Database").
-- `logoUrl` (string, required): URL for the technology's logo.
+**Validation Rules**:
+- `id` and `name` are required.
 
 **Example**:
-
 ```json
 {
-  "id": "tech-001",
-  "name": "React",
-  "type": "Library",
-  "logoUrl": "/images/tech/react.svg"
+  "id": "react",
+  "name": "React"
 }
 ```
 
 ## 4. Hobby
 
-Represents a hobby or interest.
+Represents a hobby.
 
-**Attributes**:
+- **`id`**: `string` - A unique identifier for the hobby.
+- **`name`**: `string` - The name of the hobby.
 
-- `id` (string, required): A unique identifier for the hobby.
-- `name` (string, required): The name of the hobby.
-- `description` (string, required): A short description of the hobby.
-- `modelUrl` (string, required): URL for the 3D model representing the hobby.
+**Validation Rules**:
+- `id` and `name` are required.
 
 **Example**:
-
 ```json
 {
-  "id": "hobby-001",
-  "name": "Gaming",
-  "description": "I enjoy playing a variety of video games in my free time.",
-  "modelUrl": "/models/hobbies/game-controller.glb"
+  "id": "soccer",
+  "name": "Soccer"
 }
 ```

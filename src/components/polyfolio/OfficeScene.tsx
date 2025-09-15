@@ -1,6 +1,6 @@
 'use client';
 
-import type { Scene, Engine, Vector3 } from '@babylonjs/core';
+import type { Scene, Engine, Vector3, Camera } from '@babylonjs/core';
 import {
   Engine as BabylonEngine,
   Scene as BabylonScene,
@@ -17,12 +17,15 @@ import {
   HemisphericLight,
   ArcRotateCamera,
   FreeCamera,
+  TargetCamera,
 } from '@babylonjs/core';
+import * as GUI from '@babylonjs/gui';
 import '@babylonjs/loaders';
 
 import React, { useEffect, useRef } from 'react';
 import type { Certification, Hobby, Tech } from '@/lib/constants';
 import { certifications, techStack, hobbies } from '@/lib/constants';
+import projects from '@/app/data/projects.json';
 
 interface OfficeSceneProps {
   activeCamera: 'third-person' | 'first-person';
@@ -30,22 +33,34 @@ interface OfficeSceneProps {
     info: { id: string; type: 'tech' | 'hobby' | 'cert'; name: string } | null
   ) => void;
   onPCClick: () => void;
+  isZoomed: boolean;
+  setIsZoomed: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const OfficeScene: React.FC<OfficeSceneProps> = ({
   activeCamera,
   onObjectHover,
   onPCClick,
+  isZoomed,
+  setIsZoomed,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const sceneRef = useRef<{
+  const sceneRef = useRef<{ 
     engine: Engine;
     scene: Scene;
     orbitCamera: ArcRotateCamera;
     fpCamera: FreeCamera;
+    pcCamera: TargetCamera;
     avatar: Mesh;
   } | null>(null);
   const inputMap = useRef<Record<string, boolean>>({});
+  const previousCameraRef = useRef<Camera | null>(null);
+  const uiContainerRef = useRef<GUI.Rectangle | null>(null);
+  const isZoomedRef = useRef(isZoomed);
+
+  useEffect(() => {
+    isZoomedRef.current = isZoomed;
+  }, [isZoomed]);
 
   useEffect(() => {
     if (!canvasRef.current) return;
@@ -67,7 +82,7 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
       glowLayer.intensity = 0.5;
 
       const deskHeight = 2.6;
-      const avatarHeight = 6.0 * 1.1; // 10% increase from original 6.0
+      const avatarHeight = 6.0 * 1.1;
       const avatarRadius = 0.4;
 
       const avatar = MeshBuilder.CreateCapsule(
@@ -77,13 +92,14 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
       );
       avatar.position = new BabylonVector3(0, avatarHeight / 2, -8);
       avatar.visibility = 0;
+      avatar.isPickable = false; // Prevent blocking clicks in FP
       avatar.checkCollisions = true;
       avatar.ellipsoid = new BabylonVector3(
         avatarRadius,
         avatarHeight / 2,
         avatarRadius
       );
-      avatar.ellipsoidOffset = new BabylonVector3(0, avatarHeight / 2, 0);
+      avatar.ellipsoidOffset = new BabylonVector3(0, 0, 0); // Corrected offset
 
       const avatarMat = new StandardMaterial('avatarMat', scene);
       avatarMat.diffuseColor = Color3.FromHexString('#4A5568');
@@ -113,14 +129,14 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
       const orbitCamera = new ArcRotateCamera(
         'orbitCamera',
         -Math.PI / 2,
-        Math.PI / 2.5,
-        5,
-        BabylonVector3.Zero(),
+        Math.PI / 3,
+        10,
+        avatar.position,
         scene
       );
       orbitCamera.upperBetaLimit = Math.PI / 2 - 0.1;
-      orbitCamera.lowerRadiusLimit = 5;
-      orbitCamera.upperRadiusLimit = 30;
+      orbitCamera.lowerRadiusLimit = 2;
+      orbitCamera.upperRadiusLimit = 20;
       orbitCamera.inputs.remove(orbitCamera.inputs.attached.mousewheel);
       orbitCamera.checkCollisions = true;
       orbitCamera.collisionRadius = new BabylonVector3(0.5, 0.5, 0.5);
@@ -135,7 +151,10 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
       fpCamera.position.y = (avatarHeight / 2) * 0.8;
       fpCamera.minZ = 0.1;
 
-      sceneRef.current = { engine, scene, orbitCamera, fpCamera, avatar };
+      const pcCamera = new TargetCamera('pcCamera', BabylonVector3.Zero(), scene);
+      pcCamera.minZ = 0.1;
+
+      sceneRef.current = { engine, scene, orbitCamera, fpCamera, pcCamera, avatar };
 
       scene.actionManager = new ActionManager(scene);
       scene.actionManager.registerAction(
@@ -152,15 +171,12 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
       // --- Create scene objects ---
       const woodMat = new StandardMaterial('woodMat', scene);
       woodMat.diffuseColor = new Color3(0.6, 0.4, 0.2);
-      woodMat.specularColor = new Color3(0.2, 0.1, 0.05);
 
       const metalMat = new StandardMaterial('metalMat', scene);
       metalMat.diffuseColor = new Color3(0.75, 0.75, 0.75);
-      metalMat.specularColor = Color3.Gray();
 
       const wallMat = new StandardMaterial('wallMat', scene);
-      wallMat.diffuseColor = new Color3(0.95, 0.94, 0.9); // Warm off-white
-      wallMat.specularColor = Color3.Black();
+      wallMat.diffuseColor = new Color3(0.95, 0.94, 0.9);
 
       const roomSize = 28.8 * 1.2;
       const roomHeight = 14.4;
@@ -172,8 +188,7 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
       );
       floor.checkCollisions = true;
       const floorMat = new StandardMaterial('floorMat', scene);
-      floorMat.diffuseColor = new Color3(0.8, 0.7, 0.55); // Light brownish cream for wood simulation
-      floorMat.specularColor = Color3.Black();
+      floorMat.diffuseColor = new Color3(0.8, 0.7, 0.55);
       floor.material = floorMat;
 
       const wallThickness = 0.5;
@@ -275,7 +290,11 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         { width: 2.2, height: 1.4, depth: 0.1 },
         scene
       );
-      monitorBezel.position = new BabylonVector3(-2, deskHeight + 0.7, deskPositionZ);
+      monitorBezel.position = new BabylonVector3(
+        -2,
+        deskHeight + 0.7,
+        deskPositionZ
+      );
       monitorBezel.material = metalMat;
       monitorBezel.checkCollisions = true;
 
@@ -288,7 +307,6 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
       monitorScreen.parent = monitorBezel;
       const monitorScreenMat = new StandardMaterial('monitorScreenMat', scene);
       monitorScreenMat.diffuseColor = Color3.Black();
-      monitorScreenMat.emissiveColor = Color3.FromHexString('#BDB2FF').scale(0.5);
       monitorScreen.material = monitorScreenMat;
 
       const monitorStand = MeshBuilder.CreateCylinder(
@@ -296,31 +314,32 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         { height: 0.6, diameter: 0.2 },
         scene
       );
-      monitorStand.position = new BabylonVector3(-2, deskHeight + 0.3, deskPositionZ + 0.2);
+      monitorStand.position = new BabylonVector3(
+        -2,
+        deskHeight + 0.3,
+        deskPositionZ + 0.2
+      );
       monitorStand.material = metalMat;
       monitorStand.checkCollisions = true;
 
       // Create PC Tower
-      // You can edit this model in the Babylon.js Sandbox: https://sandbox.babylonjs.com/
       const pcTower = MeshBuilder.CreateBox(
         'pcTower',
         { width: 0.8, height: 2.5, depth: 2 },
         scene
       );
-      pcTower.position = new BabylonVector3(2, deskHeight + 1.25, deskPositionZ);
+      pcTower.position = new BabylonVector3(
+        2,
+        deskHeight + 1.25,
+        deskPositionZ
+      );
       pcTower.material = metalMat;
       pcTower.checkCollisions = true;
 
-      // Add interaction to the monitor screen
-      monitorScreen.actionManager = new ActionManager(scene);
-      monitorScreen.actionManager.registerAction(
-        new ExecuteCodeAction(ActionManager.OnPickTrigger, () => {
-          onPCClick();
-        })
-      );
-
-      const createCertificationFrame = (cert: Certification, position: Vector3) => {
-        // You can edit this model in the Babylon.js Sandbox: https://sandbox.babylonjs.com/
+      const createCertificationFrame = (
+        cert: Certification,
+        position: Vector3
+      ) => {
         const frame = MeshBuilder.CreateBox(
           cert.id,
           { width: 2.5, height: 1.8, depth: 0.1 },
@@ -330,52 +349,6 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         const frameMat = new StandardMaterial(`${cert.id}-mat`, scene);
         frameMat.diffuseColor = new Color3(0.2, 0.2, 0.2);
         frame.material = frameMat;
-
-        const backboard = MeshBuilder.CreateBox(
-          `${cert.id}-backboard`,
-          { width: 2.3, height: 1.6, depth: 0.05 },
-          scene
-        );
-        backboard.parent = frame;
-        backboard.position.z = -0.05;
-        const backboardMat = new StandardMaterial(`${cert.id}-backboard-mat`, scene);
-        backboardMat.diffuseColor = new Color3(0.9, 0.9, 0.9);
-        backboard.material = backboardMat;
-
-        const textPlane = MeshBuilder.CreatePlane(
-          `${cert.id}-text`,
-          { width: 2, height: 1.4 },
-          scene
-        );
-        textPlane.parent = backboard;
-        textPlane.position.z = -0.03;
-
-        const textTexture = new Texture(
-          `data:text/plain,${cert.title}`,
-          scene,
-          true,
-          true,
-          Texture.NEAREST_SAMPLINGMODE,
-          () => {
-            textTexture.update();
-          }
-        );
-
-        const textMat = new StandardMaterial(`${cert.id}-text-mat`, scene);
-        textMat.diffuseTexture = textTexture;
-        textPlane.material = textMat;
-
-        const ribbon = MeshBuilder.CreateCylinder(
-          `${cert.id}-ribbon`,
-          { height: 0.5, diameter: 0.2 },
-          scene
-        );
-        ribbon.parent = frame;
-        ribbon.position.y = -0.7;
-        ribbon.position.z = -0.1;
-        const ribbonMat = new StandardMaterial(`${cert.id}-ribbon-mat`, scene);
-        ribbonMat.diffuseColor = new Color3(0.8, 0.2, 0.2);
-        ribbon.material = ribbonMat;
 
         frame.actionManager = new ActionManager(scene);
         frame.actionManager.registerAction(
@@ -408,8 +381,6 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         );
       });
 
-      // Create Bookshelf
-      // You can edit this model in the Babylon.js Sandbox: https://sandbox.babylonjs.com/
       const bookshelfHeight = 8;
       const bookshelfWidth = 5;
       const bookshelfDepth = 1.2;
@@ -420,7 +391,7 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         deskPositionZ + 1
       );
 
-      const bookshelf = new Mesh("bookshelf", scene);
+      const bookshelf = new Mesh('bookshelf', scene);
       bookshelf.position = bookshelfPosition;
 
       const bookshelfBack = MeshBuilder.CreateBox(
@@ -467,7 +438,8 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
 
       const numShelves = 4;
       for (let i = 0; i < numShelves; i++) {
-        const shelfY = (bookshelfHeight / (numShelves + 1)) * (i + 1) - bookshelfHeight / 2;
+        const shelfY =
+          (bookshelfHeight / (numShelves + 1)) * (i + 1) - bookshelfHeight / 2;
         const shelf = MeshBuilder.CreateBox(
           `bookshelf_shelf_${i}`,
           {
@@ -483,7 +455,6 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         shelf.checkCollisions = true;
 
         if (i === 1) {
-          // Place books on the second shelf from the bottom
           techStack.forEach((tech, j) => {
             const book = MeshBuilder.CreateBox(
               tech.id,
@@ -548,7 +519,10 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
       );
       soccerBall.position = new BabylonVector3(-8, 0.6, -8);
       const soccerMat = new StandardMaterial('soccerMat', scene);
-      soccerMat.diffuseColor = Color3.White();
+      soccerMat.diffuseTexture = new Texture(
+        'https://img.freepik.com/free-vector/football-ball-realistic-3d-icon-isolated-white-background_165488-3204.jpg',
+        scene
+      );
       soccerBall.material = soccerMat;
       addInteraction(soccerBall, hobbies[0], 'hobby');
 
@@ -565,35 +539,62 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
       moviePoster.rotation.y = Math.PI / 2;
       const posterMat = new StandardMaterial('posterMat', scene);
       posterMat.diffuseTexture = new Texture(
-        'https://picsum.photos/250/350?random=4',
+        'https://www.themoviedb.org/t/p/original/f89JAYsftDPZH8BJ8dY5VM7GSCq.jpg',
         scene
       );
       moviePoster.material = posterMat;
       addInteraction(moviePoster, hobbies[1], 'hobby');
 
-      const popcorn = MeshBuilder.CreateCylinder(
+      const popcornCup = MeshBuilder.CreateCylinder(
         hobbies[2].id,
         { height: 1, diameterTop: 0.8, diameterBottom: 0.6 },
         scene
       );
-      popcorn.position = new BabylonVector3(
+      popcornCup.position = new BabylonVector3(
         2.5,
         deskHeight + 0.5,
         deskPositionZ
       );
       const popcornMat = new StandardMaterial('popcornMat', scene);
-      popcornMat.diffuseColor = Color3.Red();
-      popcorn.material = popcornMat;
-      addInteraction(popcorn, hobbies[2], 'hobby');
+      const popcornTexture = new Texture(
+        'https://www.the3dstudio.com/textures/19/9606-popcorn-texture.jpg',
+        scene
+      );
+      popcornMat.diffuseTexture = popcornTexture;
+      popcornCup.material = popcornMat;
+      addInteraction(popcornCup, hobbies[2], 'hobby');
+
+      for (let i = 0; i < 20; i++) {
+        const kernel = MeshBuilder.CreateSphere(
+          `kernel${i}`,
+          { diameter: 0.2 },
+          scene
+        );
+        kernel.parent = popcornCup;
+        kernel.position = new BabylonVector3(
+          Math.random() * 0.3 - 0.15,
+          Math.random() * 0.2 + 0.4,
+          Math.random() * 0.3 - 0.15
+        );
+        const kernelMat = new StandardMaterial(`kernelMat${i}`, scene);
+        kernelMat.diffuseColor =
+          Math.random() > 0.5 ? Color3.White() : Color3.Yellow();
+        kernel.material = kernelMat;
+      }
 
       const deskBarrier = MeshBuilder.CreateBox(
         'deskBarrier',
         { width: deskWidth + 1, height: roomHeight, depth: deskDepth + 1 },
         scene
       );
-      deskBarrier.position = new BabylonVector3(0, roomHeight / 2, deskPositionZ);
+      deskBarrier.position = new BabylonVector3(
+        0,
+        roomHeight / 2,
+        deskPositionZ
+      );
       deskBarrier.visibility = 0;
       deskBarrier.checkCollisions = true;
+      deskBarrier.isPickable = false;
 
       const bookshelfBarrier = MeshBuilder.CreateBox(
         'bookshelfBarrier',
@@ -611,28 +612,120 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
       );
       bookshelfBarrier.visibility = 0;
       bookshelfBarrier.checkCollisions = true;
+      bookshelfBarrier.isPickable = false;
 
-      // Add Rugs
-      const rugMat1 = new StandardMaterial('rugMat1', scene);
-      rugMat1.diffuseColor = new Color3(0.4, 0.4, 0.6); // Blue-ish rug
-      const rug1 = MeshBuilder.CreateGround(
-        'rug1',
-        { width: 10, height: 7 },
-        scene
-      );
-      rug1.material = rugMat1;
-      rug1.position = new BabylonVector3(0, 0.05, 0);
+      // Add interaction to the whole PC
+      const assignPCClickAction = (mesh: Mesh) => {
+        mesh.actionManager = new ActionManager(scene);
+        mesh.actionManager.registerAction(
+          new ExecuteCodeAction(ActionManager.OnPickTrigger, () => {
+            const { avatar } = sceneRef.current!;
+            const distance = BabylonVector3.Distance(
+              avatar.getAbsolutePosition(),
+              mesh.getAbsolutePosition()
+            );
+            if (distance < 8) {
+              onPCClick();
+            } else {
+              console.log('You are too far to interact with the PC.');
+            }
+          })
+        );
+      };
+      assignPCClickAction(monitorScreen);
+      assignPCClickAction(pcTower);
+      assignPCClickAction(monitorBezel);
 
-      const rugMat2 = new StandardMaterial('rugMat2', scene);
-      rugMat2.diffuseColor = new Color3(0.7, 0.3, 0.3); // Red-ish rug
-      const rug2 = MeshBuilder.CreateGround(
-        'rug2',
-        { width: 4, height: 6 },
-        scene
+      // --- GUI for Monitor Screen ---
+      const advancedTexture = GUI.AdvancedDynamicTexture.CreateForMesh(
+        monitorScreen,
+        1024,
+        576,
+        false // No pointer events on the texture itself
       );
-      rug2.material = rugMat2;
-      rug2.position = new BabylonVector3(-10, 0.05, 5);
-      rug2.rotation.y = Math.PI / 4;
+
+      const uiContainer = new GUI.Rectangle('ui-container');
+      uiContainer.thickness = 0;
+      uiContainer.isVisible = false;
+      advancedTexture.addControl(uiContainer);
+      uiContainerRef.current = uiContainer;
+
+      const projectsBrowser = new GUI.Rectangle('projects-browser');
+      projectsBrowser.width = '100%';
+      projectsBrowser.height = '100%';
+      projectsBrowser.cornerRadius = 10;
+      projectsBrowser.color = '#333';
+      projectsBrowser.thickness = 4;
+      projectsBrowser.background = '#1a1a1a';
+      uiContainer.addControl(projectsBrowser);
+
+      const titleBar = new GUI.Rectangle('title-bar');
+      titleBar.width = '100%';
+      titleBar.height = '60px';
+      titleBar.background = '#444';
+      titleBar.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      projectsBrowser.addControl(titleBar);
+
+      const title = new GUI.TextBlock('title', "Fabio's Projects");
+      title.color = 'white';
+      title.fontSize = 24;
+      titleBar.addControl(title);
+
+      const closeButton = GUI.Button.CreateSimpleButton('close-button', 'X');
+      closeButton.width = '40px';
+      closeButton.height = '40px';
+      closeButton.color = 'white';
+      closeButton.background = '#d9534f';
+      closeButton.cornerRadius = 5;
+      closeButton.horizontalAlignment = GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+      closeButton.verticalAlignment = GUI.Control.VERTICAL_ALIGNMENT_TOP;
+      closeButton.left = '-10px';
+      closeButton.top = '10px';
+      closeButton.onPointerUpObservable.add(() => {
+        setIsZoomed(false);
+      });
+      titleBar.addControl(closeButton);
+
+      const grid = new GUI.Grid();
+      grid.paddingTop = '60px'; // leave space for title bar
+      projectsBrowser.addControl(grid);
+
+      grid.addColumnDefinition(250, true); // width in pixels
+      grid.addColumnDefinition(1, false); // relative width
+
+      const projectsList = new GUI.ScrollViewer('projects-list');
+      projectsList.background = '#2a2a2a';
+      grid.addControl(projectsList, 0, 0);
+
+      const projectsListPanel = new GUI.StackPanel();
+      projectsList.addControl(projectsListPanel);
+
+      const webViewer = new GUI.Rectangle('web-viewer');
+      webViewer.background = 'white';
+      webViewer.thickness = 0;
+      grid.addControl(webViewer, 0, 1);
+
+      const placeholderText = new GUI.TextBlock(
+        'placeholder',
+        'Select a project to view'
+      );
+      placeholderText.color = 'black';
+      webViewer.addControl(placeholderText);
+
+      projects.forEach((project) => {
+        const button = GUI.Button.CreateSimpleButton(project.id, project.name);
+        button.height = '50px';
+        button.width = '95%';
+        button.color = 'white';
+        button.background = '#555';
+        button.paddingTop = '5px';
+        button.paddingBottom = '5px';
+        button.onPointerUpObservable.add(() => {
+          const textControl = webViewer.children[0] as GUI.TextBlock;
+          textControl.text = `Loading ${project.name}...\n\n(Live web view is not supported in this demo)`;
+        });
+        projectsListPanel.addControl(button);
+      });
 
       const playerSpeed = 0.1;
 
@@ -667,18 +760,15 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         if (moveDirection.lengthSquared() > 0) {
           moveDirection.normalize();
           avatar.moveWithCollisions(moveDirection.scale(playerSpeed));
-
-          if (scene.activeCamera === orbitCamera) {
-            const angle = Math.atan2(moveDirection.x, moveDirection.z);
-            avatar.rotation.y = angle;
-          }
         }
+        // Apply gravity
+        avatar.moveWithCollisions(new BabylonVector3(0, -0.5, 0));
 
         if (scene.activeCamera === fpCamera) {
           avatar.rotation.y = fpCamera.rotation.y;
         }
 
-        if (scene.activeCamera === orbitCamera) {
+        if (scene.activeCamera === orbitCamera && orbitCamera && !isZoomedRef.current) {
           orbitCamera.target.copyFrom(avatar.position);
           orbitCamera.target.y += avatarHeight * 0.4;
         }
@@ -702,29 +792,61 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
 
     const { scene, orbitCamera, fpCamera, avatar, engine } = sceneRef.current;
 
-    if (scene.activeCamera) {
-      scene.activeCamera.detachControl();
-    }
-
     if (activeCamera === 'first-person') {
-      scene.activeCamera = fpCamera;
-      avatar.getChildMeshes().forEach((m) => (m.isVisible = false));
-
-      setTimeout(() => {
-        fpCamera.attachControl(canvasRef.current, true);
-        engine.getRenderingCanvas()?.focus();
-      }, 50);
+      if (scene.activeCamera !== fpCamera) {
+        scene.activeCamera?.detachControl();
+        scene.activeCamera = fpCamera;
+        avatar.getChildMeshes().forEach((m) => (m.isVisible = false));
+        setTimeout(() => fpCamera.attachControl(canvasRef.current, true), 50);
+      }
     } else {
       // 'third-person'
-      scene.activeCamera = orbitCamera;
-      avatar.getChildMeshes().forEach((m) => (m.isVisible = true));
-
-      setTimeout(() => {
-        orbitCamera.attachControl(canvasRef.current, true);
-        engine.getRenderingCanvas()?.focus();
-      }, 50);
+      if (scene.activeCamera !== orbitCamera) {
+        scene.activeCamera?.detachControl();
+        scene.activeCamera = orbitCamera;
+        avatar.getChildMeshes().forEach((m) => (m.isVisible = true));
+        setTimeout(() => orbitCamera.attachControl(canvasRef.current, true), 50);
+      }
     }
   }, [activeCamera]);
+
+  useEffect(() => {
+    if (!sceneRef.current || !canvasRef.current) return;
+    const { scene, pcCamera, orbitCamera, fpCamera } = sceneRef.current;
+
+    if (isZoomed) {
+      if (!previousCameraRef.current) {
+        previousCameraRef.current = scene.activeCamera;
+      }
+      scene.activeCamera?.detachControl();
+
+      const monitorScreen = scene.getMeshByName('monitorScreen');
+      if (monitorScreen) {
+        const targetPosition = monitorScreen.getAbsolutePosition();
+        const cameraPosition = new BabylonVector3(targetPosition.x, targetPosition.y, targetPosition.z - 3);
+        pcCamera.position = cameraPosition;
+        pcCamera.setTarget(targetPosition);
+      }
+
+      scene.activeCamera = pcCamera;
+      if (uiContainerRef.current) uiContainerRef.current.isVisible = true;
+
+    } else {
+      if (previousCameraRef.current) {
+        if (uiContainerRef.current) uiContainerRef.current.isVisible = false;
+        scene.activeCamera = previousCameraRef.current;
+        
+        if(previousCameraRef.current === orbitCamera) {
+            orbitCamera.attachControl(canvasRef.current, true);
+        } else if (previousCameraRef.current === fpCamera) {
+            fpCamera.attachControl(canvasRef.current, true);
+        }
+
+        previousCameraRef.current = null;
+      }
+    }
+  }, [isZoomed]);
+
 
   return <canvas ref={canvasRef} className="w-full h-full outline-none" />;
 };
