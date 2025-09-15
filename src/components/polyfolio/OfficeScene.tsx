@@ -1,6 +1,6 @@
 'use client';
 
-import type { Scene, Engine, Vector3 } from '@babylonjs/core';
+import type { Scene, Engine, Vector3, Camera } from '@babylonjs/core';
 import {
   Engine as BabylonEngine,
   Scene as BabylonScene,
@@ -17,9 +17,7 @@ import {
   HemisphericLight,
   ArcRotateCamera,
   FreeCamera,
-  Animation,
-  CubicEase,
-  EasingFunction,
+  TargetCamera,
 } from '@babylonjs/core';
 import * as GUI from '@babylonjs/gui';
 import '@babylonjs/loaders';
@@ -47,22 +45,16 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
   setIsZoomed,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const sceneRef = useRef<{
+  const sceneRef = useRef<{ 
     engine: Engine;
     scene: Scene;
     orbitCamera: ArcRotateCamera;
     fpCamera: FreeCamera;
+    pcCamera: TargetCamera;
     avatar: Mesh;
   } | null>(null);
   const inputMap = useRef<Record<string, boolean>>({});
-  const initialOrbitCameraState = useRef<{
-    position: Vector3;
-    target: Vector3;
-    alpha: number;
-    beta: number;
-    radius: number;
-    fov: number;
-  } | null>(null);
+  const previousCameraRef = useRef<Camera | null>(null);
   const uiContainerRef = useRef<GUI.Rectangle | null>(null);
   const isZoomedRef = useRef(isZoomed);
 
@@ -100,13 +92,14 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
       );
       avatar.position = new BabylonVector3(0, avatarHeight / 2, -8);
       avatar.visibility = 0;
+      avatar.isPickable = false; // Prevent blocking clicks in FP
       avatar.checkCollisions = true;
       avatar.ellipsoid = new BabylonVector3(
         avatarRadius,
         avatarHeight / 2,
         avatarRadius
       );
-      avatar.ellipsoidOffset = new BabylonVector3(0, avatarHeight / 2, 0);
+      avatar.ellipsoidOffset = new BabylonVector3(0, 0, 0); // Corrected offset
 
       const avatarMat = new StandardMaterial('avatarMat', scene);
       avatarMat.diffuseColor = Color3.FromHexString('#4A5568');
@@ -136,14 +129,14 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
       const orbitCamera = new ArcRotateCamera(
         'orbitCamera',
         -Math.PI / 2,
-        Math.PI / 2.5,
-        5,
-        BabylonVector3.Zero(),
+        Math.PI / 3,
+        10,
+        avatar.position,
         scene
       );
       orbitCamera.upperBetaLimit = Math.PI / 2 - 0.1;
-      orbitCamera.lowerRadiusLimit = 0.5;
-      orbitCamera.upperRadiusLimit = 50;
+      orbitCamera.lowerRadiusLimit = 2;
+      orbitCamera.upperRadiusLimit = 20;
       orbitCamera.inputs.remove(orbitCamera.inputs.attached.mousewheel);
       orbitCamera.checkCollisions = true;
       orbitCamera.collisionRadius = new BabylonVector3(0.5, 0.5, 0.5);
@@ -158,7 +151,10 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
       fpCamera.position.y = (avatarHeight / 2) * 0.8;
       fpCamera.minZ = 0.1;
 
-      sceneRef.current = { engine, scene, orbitCamera, fpCamera, avatar };
+      const pcCamera = new TargetCamera('pcCamera', BabylonVector3.Zero(), scene);
+      pcCamera.minZ = 0.1;
+
+      sceneRef.current = { engine, scene, orbitCamera, fpCamera, pcCamera, avatar };
 
       scene.actionManager = new ActionManager(scene);
       scene.actionManager.registerAction(
@@ -623,7 +619,16 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         mesh.actionManager = new ActionManager(scene);
         mesh.actionManager.registerAction(
           new ExecuteCodeAction(ActionManager.OnPickTrigger, () => {
-            onPCClick();
+            const { avatar } = sceneRef.current!;
+            const distance = BabylonVector3.Distance(
+              avatar.getAbsolutePosition(),
+              mesh.getAbsolutePosition()
+            );
+            if (distance < 8) {
+              onPCClick();
+            } else {
+              console.log('You are too far to interact with the PC.');
+            }
           })
         );
       };
@@ -755,15 +760,15 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         if (moveDirection.lengthSquared() > 0) {
           moveDirection.normalize();
           avatar.moveWithCollisions(moveDirection.scale(playerSpeed));
-
-          
         }
+        // Apply gravity
+        avatar.moveWithCollisions(new BabylonVector3(0, -0.5, 0));
 
         if (scene.activeCamera === fpCamera) {
           avatar.rotation.y = fpCamera.rotation.y;
         }
 
-        if (scene.activeCamera === orbitCamera && !isZoomedRef.current) {
+        if (scene.activeCamera === orbitCamera && orbitCamera && !isZoomedRef.current) {
           orbitCamera.target.copyFrom(avatar.position);
           orbitCamera.target.y += avatarHeight * 0.4;
         }
@@ -787,137 +792,61 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
 
     const { scene, orbitCamera, fpCamera, avatar, engine } = sceneRef.current;
 
-    if (scene.activeCamera) {
-      scene.activeCamera.detachControl();
-    }
-
     if (activeCamera === 'first-person') {
-      scene.activeCamera = fpCamera;
-      avatar.getChildMeshes().forEach((m) => (m.isVisible = false));
-
-      setTimeout(() => {
-        fpCamera.attachControl(canvasRef.current, true);
-        engine.getRenderingCanvas()?.focus();
-      }, 50);
+      if (scene.activeCamera !== fpCamera) {
+        scene.activeCamera?.detachControl();
+        scene.activeCamera = fpCamera;
+        avatar.getChildMeshes().forEach((m) => (m.isVisible = false));
+        setTimeout(() => fpCamera.attachControl(canvasRef.current, true), 50);
+      }
     } else {
       // 'third-person'
-      scene.activeCamera = orbitCamera;
-      avatar.getChildMeshes().forEach((m) => (m.isVisible = true));
-
-      setTimeout(() => {
-        orbitCamera.attachControl(canvasRef.current, true);
-        engine.getRenderingCanvas()?.focus();
-      }, 50);
+      if (scene.activeCamera !== orbitCamera) {
+        scene.activeCamera?.detachControl();
+        scene.activeCamera = orbitCamera;
+        avatar.getChildMeshes().forEach((m) => (m.isVisible = true));
+        setTimeout(() => orbitCamera.attachControl(canvasRef.current, true), 50);
+      }
     }
   }, [activeCamera]);
 
   useEffect(() => {
-    if (uiContainerRef.current) {
-      uiContainerRef.current.isVisible = isZoomed;
+    if (!sceneRef.current || !canvasRef.current) return;
+    const { scene, pcCamera, orbitCamera, fpCamera } = sceneRef.current;
+
+    if (isZoomed) {
+      if (!previousCameraRef.current) {
+        previousCameraRef.current = scene.activeCamera;
+      }
+      scene.activeCamera?.detachControl();
+
+      const monitorScreen = scene.getMeshByName('monitorScreen');
+      if (monitorScreen) {
+        const targetPosition = monitorScreen.getAbsolutePosition();
+        const cameraPosition = new BabylonVector3(targetPosition.x, targetPosition.y, targetPosition.z - 3);
+        pcCamera.position = cameraPosition;
+        pcCamera.setTarget(targetPosition);
+      }
+
+      scene.activeCamera = pcCamera;
+      if (uiContainerRef.current) uiContainerRef.current.isVisible = true;
+
+    } else {
+      if (previousCameraRef.current) {
+        if (uiContainerRef.current) uiContainerRef.current.isVisible = false;
+        scene.activeCamera = previousCameraRef.current;
+        
+        if(previousCameraRef.current === orbitCamera) {
+            orbitCamera.attachControl(canvasRef.current, true);
+        } else if (previousCameraRef.current === fpCamera) {
+            fpCamera.attachControl(canvasRef.current, true);
+        }
+
+        previousCameraRef.current = null;
+      }
     }
   }, [isZoomed]);
 
-  useEffect(() => {
-    if (!sceneRef.current) return;
-    const { scene, orbitCamera } = sceneRef.current;
-
-    if (isZoomed) {
-      orbitCamera.detachControl();
-      if (!initialOrbitCameraState.current) {
-        initialOrbitCameraState.current = {
-          position: orbitCamera.position.clone(),
-          target: orbitCamera.target.clone(),
-          alpha: orbitCamera.alpha,
-          beta: orbitCamera.beta,
-          radius: orbitCamera.radius,
-          fov: orbitCamera.fov,
-        };
-      }
-
-      const monitorScreen = scene.getMeshByName('monitorScreen');
-      if (!monitorScreen) return;
-
-      const targetPosition = monitorScreen.getAbsolutePosition();
-      const endPosition = new BabylonVector3(targetPosition.x, targetPosition.y, targetPosition.z - 4);
-
-      Animation.CreateAndStartAnimation(
-        'zoom-in-tgt',
-        orbitCamera,
-        'target',
-        60,
-        60,
-        orbitCamera.target,
-        targetPosition,
-        Animation.ANIMATIONLOOPMODE_CONSTANT,
-        new CubicEase()
-      );
-
-      Animation.CreateAndStartAnimation(
-        'zoom-in-pos',
-        orbitCamera,
-        'position',
-        60,
-        60,
-        orbitCamera.position,
-        endPosition,
-        Animation.ANIMATIONLOOPMODE_CONSTANT,
-        new CubicEase()
-      );
-
-      Animation.CreateAndStartAnimation(
-        'zoom-in-fov',
-        orbitCamera,
-        'fov',
-        60,
-        60,
-        orbitCamera.fov,
-        0.4,
-        Animation.ANIMATIONLOOPMODE_CONSTANT,
-        new CubicEase()
-      );
-    } else {
-      if (initialOrbitCameraState.current) {
-        orbitCamera.detachControl();
-        Animation.CreateAndStartAnimation(
-          'zoom-out-tgt',
-          orbitCamera,
-          'target',
-          60,
-          60,
-          orbitCamera.target,
-          initialOrbitCameraState.current.target,
-          Animation.ANIMATIONLOOPMODE_CONSTANT,
-          new CubicEase()
-        );
-        Animation.CreateAndStartAnimation(
-          'zoom-out-pos',
-          orbitCamera,
-          'position',
-          60,
-          60,
-          orbitCamera.position,
-          initialOrbitCameraState.current.position,
-          Animation.ANIMATIONLOOPMODE_CONSTANT,
-          new CubicEase()
-        );
-        Animation.CreateAndStartAnimation(
-          'zoom-out-fov',
-          orbitCamera,
-          'fov',
-          60,
-          60,
-          orbitCamera.fov,
-          initialOrbitCameraState.current.fov,
-          Animation.ANIMATIONLOOPMODE_CONSTANT,
-          new CubicEase(),
-          () => {
-            initialOrbitCameraState.current = null;
-            orbitCamera.attachControl(canvasRef.current, true);
-          }
-        );
-      }
-    }
-  }, [isZoomed, sceneRef]);
 
   return <canvas ref={canvasRef} className="w-full h-full outline-none" />;
 };
