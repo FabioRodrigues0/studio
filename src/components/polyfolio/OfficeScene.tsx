@@ -45,7 +45,7 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
   setIsZoomed,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const sceneRef = useRef<{ 
+  const sceneRef = useRef<{
     engine: Engine;
     scene: Scene;
     orbitCamera: ArcRotateCamera;
@@ -57,6 +57,7 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
   const previousCameraRef = useRef<Camera | null>(null);
   const uiContainerRef = useRef<GUI.Rectangle | null>(null);
   const isZoomedRef = useRef(isZoomed);
+  const fixedYPosition = useRef(0);
 
   useEffect(() => {
     isZoomedRef.current = isZoomed;
@@ -81,16 +82,20 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
       const glowLayer = new GlowLayer('glow', scene);
       glowLayer.intensity = 0.5;
 
-      const deskHeight = 2.6;
-      const avatarHeight = 6.0 * 1.1;
+      const deskHeight = 2.9; // Adjusted desk height to match taller avatar
+      const avatarHeight = 4.0; // Increased by ~30% to match adult height
       const avatarRadius = 0.4;
+      const roomHeight = 14.4;
+
+      // Fixed Y position - avatar will always stay at this height
+      fixedYPosition.current = avatarHeight / 2 + 0.1;
 
       const avatar = MeshBuilder.CreateCapsule(
         'avatar',
         { height: avatarHeight, radius: avatarRadius },
         scene
       );
-      avatar.position = new BabylonVector3(0, avatarHeight / 2, -8);
+      avatar.position = new BabylonVector3(0, fixedYPosition.current, -8);
       avatar.visibility = 0;
       avatar.isPickable = false; // Prevent blocking clicks in FP
       avatar.checkCollisions = true;
@@ -99,7 +104,8 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         avatarHeight / 2,
         avatarRadius
       );
-      avatar.ellipsoidOffset = new BabylonVector3(0, 0, 0); // Corrected offset
+      // Set ellipsoid offset to better handle collisions
+      avatar.ellipsoidOffset = new BabylonVector3(0, 0, 0);
 
       const avatarMat = new StandardMaterial('avatarMat', scene);
       avatarMat.diffuseColor = Color3.FromHexString('#4A5568');
@@ -148,13 +154,24 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         scene
       );
       fpCamera.parent = avatar;
-      fpCamera.position.y = (avatarHeight / 2) * 0.8;
+      fpCamera.position.y = avatarHeight * 0.75; // Positioned at eye level for taller avatar
       fpCamera.minZ = 0.1;
 
-      const pcCamera = new TargetCamera('pcCamera', BabylonVector3.Zero(), scene);
+      const pcCamera = new TargetCamera(
+        'pcCamera',
+        BabylonVector3.Zero(),
+        scene
+      );
       pcCamera.minZ = 0.1;
 
-      sceneRef.current = { engine, scene, orbitCamera, fpCamera, pcCamera, avatar };
+      sceneRef.current = {
+        engine,
+        scene,
+        orbitCamera,
+        fpCamera,
+        pcCamera,
+        avatar,
+      };
 
       scene.actionManager = new ActionManager(scene);
       scene.actionManager.registerAction(
@@ -179,7 +196,7 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
       wallMat.diffuseColor = new Color3(0.95, 0.94, 0.9);
 
       const roomSize = 28.8 * 1.2;
-      const roomHeight = 14.4;
+      // Room height is now defined earlier
 
       const floor = MeshBuilder.CreateGround(
         'floor',
@@ -257,7 +274,7 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
 
       const deskWidth = 8;
       const deskDepth = 3.5;
-      const deskPositionZ = halfRoomSize - wallThickness - deskDepth / 2 - 1;
+      const deskPositionZ = 0; // Centered in the room for better access
 
       const deskTop = MeshBuilder.CreateBox(
         'deskTop',
@@ -499,7 +516,12 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
             onObjectHover({
               id: item.id,
               type,
-              name: (item as any).title || item.name,
+              name:
+                'title' in item
+                  ? item.title
+                  : 'name' in item
+                    ? item.name
+                    : 'Unknown',
             });
             glowLayer.addIncludedOnlyMesh(mesh);
           })
@@ -713,7 +735,10 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
       webViewer.addControl(placeholderText);
 
       projects.forEach((project) => {
-        const button = GUI.Button.CreateSimpleButton(project.id, project.name);
+        const button = GUI.Button.CreateSimpleButton(
+          project.name,
+          project.name
+        );
         button.height = '50px';
         button.width = '95%';
         button.color = 'white';
@@ -761,14 +786,26 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
           moveDirection.normalize();
           avatar.moveWithCollisions(moveDirection.scale(playerSpeed));
         }
-        // Apply gravity
-        avatar.moveWithCollisions(new BabylonVector3(0, -0.5, 0));
+
+        // Force avatar to maintain fixed Y position
+        avatar.position.y = fixedYPosition.current;
+
+        // Special handling for desk area to prevent floating effect
+        const deskProximity = 4; // Distance from desk to apply special handling
+        if (Math.abs(avatar.position.z) < deskProximity) {
+          // Apply small vertical adjustment to ensure no visual floating near desk
+          avatar.position.y = fixedYPosition.current - 0.05;
+        }
 
         if (scene.activeCamera === fpCamera) {
           avatar.rotation.y = fpCamera.rotation.y;
         }
 
-        if (scene.activeCamera === orbitCamera && orbitCamera && !isZoomedRef.current) {
+        if (
+          scene.activeCamera === orbitCamera &&
+          orbitCamera &&
+          !isZoomedRef.current
+        ) {
           orbitCamera.target.copyFrom(avatar.position);
           orbitCamera.target.y += avatarHeight * 0.4;
         }
@@ -797,6 +834,10 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         scene.activeCamera?.detachControl();
         scene.activeCamera = fpCamera;
         avatar.getChildMeshes().forEach((m) => (m.isVisible = false));
+
+        // Ensure avatar is at fixed height
+        avatar.position.y = fixedYPosition.current;
+
         setTimeout(() => fpCamera.attachControl(canvasRef.current, true), 50);
       }
     } else {
@@ -805,8 +846,16 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         scene.activeCamera?.detachControl();
         scene.activeCamera = orbitCamera;
         avatar.getChildMeshes().forEach((m) => (m.isVisible = true));
-        setTimeout(() => orbitCamera.attachControl(canvasRef.current, true), 50);
+        setTimeout(
+          () => orbitCamera.attachControl(canvasRef.current, true),
+          50
+        );
       }
+    }
+
+    // Ensure camera controls are attached on initial load
+    if (activeCamera === 'third-person' && scene.activeCamera === orbitCamera) {
+      orbitCamera.attachControl(canvasRef.current, true);
     }
   }, [activeCamera]);
 
@@ -823,30 +872,32 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
       const monitorScreen = scene.getMeshByName('monitorScreen');
       if (monitorScreen) {
         const targetPosition = monitorScreen.getAbsolutePosition();
-        const cameraPosition = new BabylonVector3(targetPosition.x, targetPosition.y, targetPosition.z - 3);
+        const cameraPosition = new BabylonVector3(
+          targetPosition.x,
+          targetPosition.y,
+          targetPosition.z - 3
+        );
         pcCamera.position = cameraPosition;
         pcCamera.setTarget(targetPosition);
       }
 
       scene.activeCamera = pcCamera;
       if (uiContainerRef.current) uiContainerRef.current.isVisible = true;
-
     } else {
       if (previousCameraRef.current) {
         if (uiContainerRef.current) uiContainerRef.current.isVisible = false;
         scene.activeCamera = previousCameraRef.current;
-        
-        if(previousCameraRef.current === orbitCamera) {
-            orbitCamera.attachControl(canvasRef.current, true);
+
+        if (previousCameraRef.current === orbitCamera) {
+          orbitCamera.attachControl(canvasRef.current, true);
         } else if (previousCameraRef.current === fpCamera) {
-            fpCamera.attachControl(canvasRef.current, true);
+          fpCamera.attachControl(canvasRef.current, true);
         }
 
         previousCameraRef.current = null;
       }
     }
   }, [isZoomed]);
-
 
   return <canvas ref={canvasRef} className="w-full h-full outline-none" />;
 };
