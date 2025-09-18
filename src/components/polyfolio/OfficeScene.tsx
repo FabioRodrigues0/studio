@@ -18,6 +18,7 @@ import {
   ArcRotateCamera,
   FreeCamera,
   TargetCamera,
+  Ray,
 } from '@babylonjs/core';
 import * as GUI from '@babylonjs/gui';
 import '@babylonjs/loaders';
@@ -45,7 +46,7 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
   setIsZoomed,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const sceneRef = useRef<{ 
+  const sceneRef = useRef<{
     engine: Engine;
     scene: Scene;
     orbitCamera: ArcRotateCamera;
@@ -57,6 +58,8 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
   const previousCameraRef = useRef<Camera | null>(null);
   const uiContainerRef = useRef<GUI.Rectangle | null>(null);
   const isZoomedRef = useRef(isZoomed);
+  const verticalVelocity = useRef(0);
+  const isGrounded = useRef(true);
 
   useEffect(() => {
     isZoomedRef.current = isZoomed;
@@ -151,10 +154,21 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
       fpCamera.position.y = (avatarHeight / 2) * 0.8;
       fpCamera.minZ = 0.1;
 
-      const pcCamera = new TargetCamera('pcCamera', BabylonVector3.Zero(), scene);
+      const pcCamera = new TargetCamera(
+        'pcCamera',
+        BabylonVector3.Zero(),
+        scene
+      );
       pcCamera.minZ = 0.1;
 
-      sceneRef.current = { engine, scene, orbitCamera, fpCamera, pcCamera, avatar };
+      sceneRef.current = {
+        engine,
+        scene,
+        orbitCamera,
+        fpCamera,
+        pcCamera,
+        avatar,
+      };
 
       scene.actionManager = new ActionManager(scene);
       scene.actionManager.registerAction(
@@ -499,7 +513,12 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
             onObjectHover({
               id: item.id,
               type,
-              name: (item as any).title || item.name,
+              name:
+                'title' in item
+                  ? item.title
+                  : 'name' in item
+                    ? item.name
+                    : 'Unknown',
             });
             glowLayer.addIncludedOnlyMesh(mesh);
           })
@@ -713,7 +732,10 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
       webViewer.addControl(placeholderText);
 
       projects.forEach((project) => {
-        const button = GUI.Button.CreateSimpleButton(project.id, project.name);
+        const button = GUI.Button.CreateSimpleButton(
+          project.name,
+          project.name
+        );
         button.height = '50px';
         button.width = '95%';
         button.color = 'white';
@@ -761,14 +783,55 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
           moveDirection.normalize();
           avatar.moveWithCollisions(moveDirection.scale(playerSpeed));
         }
-        // Apply gravity
-        avatar.moveWithCollisions(new BabylonVector3(0, -0.5, 0));
+
+        // Proper gravity system with raycast ground detection
+        const rayOrigin = avatar.position.clone();
+        const rayDirection = new BabylonVector3(0, -1, 0);
+        const rayLength = avatarHeight / 2 + 0.2; // Slightly more than avatar radius
+
+        const ray = new Ray(rayOrigin, rayDirection, rayLength);
+        const hit = scene.pickWithRay(ray);
+
+        // Check if we hit the ground
+        const isOnGround =
+          hit && hit.hit && hit.distance <= avatarHeight / 2 + 0.1;
+
+        if (isOnGround && hit.pickedPoint) {
+          // On ground - reset velocity and maintain position
+          if (!isGrounded.current) {
+            verticalVelocity.current = 0;
+            isGrounded.current = true;
+          }
+
+          // Ensure avatar stays at correct height above ground
+          const targetY = hit.pickedPoint.y + avatarHeight / 2;
+          if (Math.abs(avatar.position.y - targetY) > 0.01) {
+            avatar.position.y = targetY;
+          }
+        } else {
+          // In air - apply gravity
+          isGrounded.current = false;
+          verticalVelocity.current -= 0.02; // Gravity acceleration
+          verticalVelocity.current = Math.max(verticalVelocity.current, -0.3); // Terminal velocity
+
+          // Apply gravity movement
+          const gravityMovement = new BabylonVector3(
+            0,
+            verticalVelocity.current,
+            0
+          );
+          avatar.moveWithCollisions(gravityMovement);
+        }
 
         if (scene.activeCamera === fpCamera) {
           avatar.rotation.y = fpCamera.rotation.y;
         }
 
-        if (scene.activeCamera === orbitCamera && orbitCamera && !isZoomedRef.current) {
+        if (
+          scene.activeCamera === orbitCamera &&
+          orbitCamera &&
+          !isZoomedRef.current
+        ) {
           orbitCamera.target.copyFrom(avatar.position);
           orbitCamera.target.y += avatarHeight * 0.4;
         }
@@ -805,7 +868,10 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         scene.activeCamera?.detachControl();
         scene.activeCamera = orbitCamera;
         avatar.getChildMeshes().forEach((m) => (m.isVisible = true));
-        setTimeout(() => orbitCamera.attachControl(canvasRef.current, true), 50);
+        setTimeout(
+          () => orbitCamera.attachControl(canvasRef.current, true),
+          50
+        );
       }
     }
   }, [activeCamera]);
@@ -823,30 +889,32 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
       const monitorScreen = scene.getMeshByName('monitorScreen');
       if (monitorScreen) {
         const targetPosition = monitorScreen.getAbsolutePosition();
-        const cameraPosition = new BabylonVector3(targetPosition.x, targetPosition.y, targetPosition.z - 3);
+        const cameraPosition = new BabylonVector3(
+          targetPosition.x,
+          targetPosition.y,
+          targetPosition.z - 3
+        );
         pcCamera.position = cameraPosition;
         pcCamera.setTarget(targetPosition);
       }
 
       scene.activeCamera = pcCamera;
       if (uiContainerRef.current) uiContainerRef.current.isVisible = true;
-
     } else {
       if (previousCameraRef.current) {
         if (uiContainerRef.current) uiContainerRef.current.isVisible = false;
         scene.activeCamera = previousCameraRef.current;
-        
-        if(previousCameraRef.current === orbitCamera) {
-            orbitCamera.attachControl(canvasRef.current, true);
+
+        if (previousCameraRef.current === orbitCamera) {
+          orbitCamera.attachControl(canvasRef.current, true);
         } else if (previousCameraRef.current === fpCamera) {
-            fpCamera.attachControl(canvasRef.current, true);
+          fpCamera.attachControl(canvasRef.current, true);
         }
 
         previousCameraRef.current = null;
       }
     }
   }, [isZoomed]);
-
 
   return <canvas ref={canvasRef} className="w-full h-full outline-none" />;
 };
