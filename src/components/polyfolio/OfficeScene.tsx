@@ -82,8 +82,8 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
       const glowLayer = new GlowLayer('glow', scene);
       glowLayer.intensity = 0.5;
 
-      const deskHeight = 2.6;
-      const avatarHeight = 3.0;
+      const deskHeight = 2.9; // Adjusted desk height to match taller avatar
+      const avatarHeight = 4.0; // Increased by ~30% to match adult height
       const avatarRadius = 0.4;
       const roomHeight = 14.4;
 
@@ -154,7 +154,7 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         scene
       );
       fpCamera.parent = avatar;
-      fpCamera.position.y = avatarHeight * 0.7; // Positioned at eye level
+      fpCamera.position.y = avatarHeight * 0.75; // Positioned at eye level for taller avatar
       fpCamera.minZ = 0.1;
 
       const pcCamera = new TargetCamera(
@@ -274,7 +274,7 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
 
       const deskWidth = 8;
       const deskDepth = 3.5;
-      const deskPositionZ = halfRoomSize - wallThickness - deskDepth / 2 - 1;
+      const deskPositionZ = 0; // Centered in the room for better access
 
       const deskTop = MeshBuilder.CreateBox(
         'deskTop',
@@ -790,6 +790,13 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         // Force avatar to maintain fixed Y position
         avatar.position.y = fixedYPosition.current;
 
+        // Special handling for desk area to prevent floating effect
+        const deskProximity = 4; // Distance from desk to apply special handling
+        if (Math.abs(avatar.position.z) < deskProximity) {
+          // Apply small vertical adjustment to ensure no visual floating near desk
+          avatar.position.y = fixedYPosition.current - 0.05;
+        }
+
         if (scene.activeCamera === fpCamera) {
           avatar.rotation.y = fpCamera.rotation.y;
         }
@@ -844,6 +851,11 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
           50
         );
       }
+    }
+
+    // Ensure camera controls are attached on initial load
+    if (activeCamera === 'third-person' && scene.activeCamera === orbitCamera) {
+      orbitCamera.attachControl(canvasRef.current, true);
     }
   }, [activeCamera]);
 
