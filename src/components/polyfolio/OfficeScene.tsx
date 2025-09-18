@@ -60,6 +60,7 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
   const lastYPosition = useRef(0);
   const stuckFrames = useRef(0);
   const safePositionY = useRef(0);
+  const maxJumpHeight = useRef(0);
 
   useEffect(() => {
     isZoomedRef.current = isZoomed;
@@ -87,6 +88,10 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
       const deskHeight = 2.6;
       const avatarHeight = 3.0;
       const avatarRadius = 0.4;
+      const roomHeight = 14.4;
+
+      // Set max jump height to prevent hitting the ceiling
+      maxJumpHeight.current = roomHeight - avatarHeight;
 
       const avatar = MeshBuilder.CreateCapsule(
         'avatar',
@@ -104,7 +109,8 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         avatarHeight / 2,
         avatarRadius
       );
-      avatar.ellipsoidOffset = new BabylonVector3(0, avatarHeight / 4, 0);
+      // Move collision ellipsoid slightly lower to improve ground detection
+      avatar.ellipsoidOffset = new BabylonVector3(0, 0, 0);
 
       const avatarMat = new StandardMaterial('avatarMat', scene);
       avatarMat.diffuseColor = Color3.FromHexString('#4A5568');
@@ -195,7 +201,7 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
       wallMat.diffuseColor = new Color3(0.95, 0.94, 0.9);
 
       const roomSize = 28.8 * 1.2;
-      const roomHeight = 14.4;
+      // Room height is now defined earlier
 
       const floor = MeshBuilder.CreateGround(
         'floor',
@@ -794,19 +800,25 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
           lastYPosition.current = avatar.position.y;
         }
 
+        // Prevent avatar from going above the ceiling or below the floor
+        if (avatar.position.y > maxJumpHeight.current) {
+          avatar.position.y = maxJumpHeight.current;
+        }
+
         // Reset position if stuck for too long or position is extreme
-        if (
-          stuckFrames.current > 60 ||
-          avatar.position.y > 10 ||
-          avatar.position.y < -10
-        ) {
+        if (stuckFrames.current > 60 || avatar.position.y < -2) {
           console.log('Avatar position reset due to physics issue');
           avatar.position.y = safePositionY.current;
           stuckFrames.current = 0;
         }
 
-        // Apply much gentler gravity
-        avatar.moveWithCollisions(new BabylonVector3(0, -0.05, 0));
+        // Apply stronger gravity to keep avatar grounded
+        avatar.moveWithCollisions(new BabylonVector3(0, -0.1, 0));
+
+        // Apply additional gravity when avatar is above a certain height
+        if (avatar.position.y > avatarHeight * 2) {
+          avatar.moveWithCollisions(new BabylonVector3(0, -0.1, 0));
+        }
 
         if (scene.activeCamera === fpCamera) {
           avatar.rotation.y = fpCamera.rotation.y;
