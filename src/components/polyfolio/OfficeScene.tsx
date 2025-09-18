@@ -57,12 +57,7 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
   const previousCameraRef = useRef<Camera | null>(null);
   const uiContainerRef = useRef<GUI.Rectangle | null>(null);
   const isZoomedRef = useRef(isZoomed);
-  const lastYPosition = useRef(0);
-  const stuckFrames = useRef(0);
-  const safePositionY = useRef(0);
-  const maxJumpHeight = useRef(0);
-  const risingCounter = useRef(0);
-  const isRising = useRef(false);
+  const fixedYPosition = useRef(0);
 
   useEffect(() => {
     isZoomedRef.current = isZoomed;
@@ -92,17 +87,15 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
       const avatarRadius = 0.4;
       const roomHeight = 14.4;
 
-      // Set max jump height to prevent hitting the ceiling
-      maxJumpHeight.current = roomHeight - avatarHeight - 1; // Keep 1 unit below ceiling
+      // Fixed Y position - avatar will always stay at this height
+      fixedYPosition.current = avatarHeight / 2 + 0.1;
 
       const avatar = MeshBuilder.CreateCapsule(
         'avatar',
         { height: avatarHeight, radius: avatarRadius },
         scene
       );
-      avatar.position = new BabylonVector3(0, avatarHeight / 2 + 0.1, -8);
-      lastYPosition.current = avatar.position.y;
-      safePositionY.current = avatarHeight / 2 + 0.1;
+      avatar.position = new BabylonVector3(0, fixedYPosition.current, -8);
       avatar.visibility = 0;
       avatar.isPickable = false; // Prevent blocking clicks in FP
       avatar.checkCollisions = true;
@@ -112,7 +105,7 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         avatarRadius
       );
       // Set ellipsoid offset to better handle collisions
-      avatar.ellipsoidOffset = new BabylonVector3(0, -avatarHeight / 4, 0);
+      avatar.ellipsoidOffset = new BabylonVector3(0, 0, 0);
 
       const avatarMat = new StandardMaterial('avatarMat', scene);
       avatarMat.diffuseColor = Color3.FromHexString('#4A5568');
@@ -794,49 +787,8 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
           avatar.moveWithCollisions(moveDirection.scale(playerSpeed));
         }
 
-        // Check if avatar is rising and track rising/stuck state
-        if (avatar.position.y > lastYPosition.current + 0.001) {
-          risingCounter.current++;
-          isRising.current = true;
-        } else if (avatar.position.y < lastYPosition.current - 0.001) {
-          risingCounter.current = 0;
-          isRising.current = false;
-        } else {
-          // Not moving vertically - check if stuck
-          stuckFrames.current++;
-        }
-
-        // Update last position
-        lastYPosition.current = avatar.position.y;
-
-        // Prevent avatar from going above the ceiling
-        if (avatar.position.y > maxJumpHeight.current) {
-          avatar.position.y = maxJumpHeight.current;
-        }
-
-        // Reset position if stuck for too long, below floor, or rising continuously
-        if (
-          stuckFrames.current > 60 ||
-          avatar.position.y < -2 ||
-          risingCounter.current > 30
-        ) {
-          console.log('Avatar position reset due to physics issue');
-          avatar.position.y = safePositionY.current;
-          stuckFrames.current = 0;
-          risingCounter.current = 0;
-        }
-
-        // Apply gravity with strength based on situation
-        const gravityStrength = isRising.current ? -0.25 : -0.15;
-        avatar.moveWithCollisions(new BabylonVector3(0, gravityStrength, 0));
-
-        // Apply additional gravity when above normal height
-        if (avatar.position.y > avatarHeight) {
-          const additionalGravity = -0.15 * (avatar.position.y / avatarHeight);
-          avatar.moveWithCollisions(
-            new BabylonVector3(0, additionalGravity, 0)
-          );
-        }
+        // Force avatar to maintain fixed Y position
+        avatar.position.y = fixedYPosition.current;
 
         if (scene.activeCamera === fpCamera) {
           avatar.rotation.y = fpCamera.rotation.y;
@@ -876,13 +828,8 @@ const OfficeScene: React.FC<OfficeSceneProps> = ({
         scene.activeCamera = fpCamera;
         avatar.getChildMeshes().forEach((m) => (m.isVisible = false));
 
-        // Ensure avatar is at proper height before switching to first person
-        if (
-          avatar.position.y < safePositionY.current ||
-          avatar.position.y > maxJumpHeight.current
-        ) {
-          avatar.position.y = safePositionY.current;
-        }
+        // Ensure avatar is at fixed height
+        avatar.position.y = fixedYPosition.current;
 
         setTimeout(() => fpCamera.attachControl(canvasRef.current, true), 50);
       }
